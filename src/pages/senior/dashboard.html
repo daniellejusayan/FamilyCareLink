@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family CareLink — Senior Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f0fdfa; font-size: 18px; }
+    .card { background: white; border-radius: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    /* Accessibility: Large Font Mode */
+    body.large-font { font-size: 22px; }
+    body.large-font .card-title { font-size: 1.4em; }
+    /* High Contrast Mode */
+    body.high-contrast { background: #000 !important; color: #ffff00 !important; }
+    body.high-contrast .card { background: #111 !important; color: #ffff00; border: 2px solid #ffff00; }
+    body.high-contrast * { color: #ffff00 !important; border-color: #ffff00 !important; }
+    body.high-contrast .btn-primary { background: #ffff00 !important; color: #000 !important; }
+    body.high-contrast .vital-box { background: #222 !important; border: 2px solid #ffff00; }
+    body.high-contrast nav { background: #111 !important; border-color: #ffff00 !important; }
+    .btn-primary { background: linear-gradient(135deg, #0f766e, #14b8a6); color: white; border-radius: 16px; font-weight: 700; transition: all 0.2s; }
+    .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+    .emergency-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); border-radius: 20px; box-shadow: 0 6px 24px rgba(220,38,38,0.5); animation: emergencyPulse 2s infinite; font-size: 1.2em; }
+    @keyframes emergencyPulse { 0%,100%{box-shadow:0 6px 24px rgba(220,38,38,0.5)} 50%{box-shadow:0 6px 36px rgba(220,38,38,0.8)} }
+    .vital-box { border-radius: 16px; padding: 20px; text-align: center; border: 2px solid #e5e7eb; }
+    .vital-normal { border-color: #bbf7d0; background: #f0fdf4; }
+    .status-good { background: #dcfce7; border-left: 6px solid #16a34a; border-radius: 16px; }
+    .top-bar { background: white; border-bottom: 1px solid #e5e7eb; }
+    .a11y-btn { border: 2px solid #0f766e; color: #0f766e; border-radius: 12px; padding: 8px 16px; font-size: 0.85em; font-weight: 600; transition: all 0.2s; }
+    .a11y-btn:hover, .a11y-btn.active { background: #0f766e; color: white; }
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(40px); opacity: 0; z-index: 9999; transition: all 0.3s; background: #1f2937; color: white; padding: 14px 24px; border-radius: 16px; font-size: 1em; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .consent-banner { border: 2px solid #fbbf24; border-radius: 16px; background: #fffbeb; }
+    .med-row { border-bottom: 2px solid #f3f4f6; padding: 16px 0; }
+    .med-row:last-child { border-bottom: none; }
+    nav.bottom-nav { background: white; border-top: 2px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Emergency Modal -->
+<div id="emergency-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 p-4">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
+    <div class="text-6xl mb-4">🚨</div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-3">Call for Help?</h2>
+    <p class="text-gray-500 mb-6">This will notify Nurse Cathy and your family right away.</p>
+    <button onclick="triggerEmergency()" class="w-full py-5 rounded-2xl bg-red-600 text-white text-xl font-bold mb-3 hover:bg-red-700">
+      🚨 Yes, Help Me!
+    </button>
+    <button onclick="closeEmergencyModal()" class="w-full py-4 rounded-2xl bg-gray-100 text-gray-600 text-lg font-medium">
+      No, I'm Okay
+    </button>
+  </div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar sticky top-0 z-30 px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <span class="text-2xl">🌏</span>
+    <span class="font-bold text-gray-800">Family CareLink</span>
+  </div>
+  <!-- Accessibility Controls -->
+  <div class="flex items-center gap-2">
+    <button id="btn-font" onclick="toggleFont()" class="a11y-btn" title="Toggle large font" aria-label="Toggle large font size">
+      Aa+
+    </button>
+    <button id="btn-contrast" onclick="toggleContrast()" class="a11y-btn" title="Toggle high contrast" aria-label="Toggle high contrast mode">
+      ◑
+    </button>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="px-4 py-4 max-w-lg mx-auto pb-32" role="main" id="main-content">
+
+  <!-- Greeting + Status -->
+  <div class="status-good p-5 mb-4 flex items-center gap-4">
+    <span class="text-4xl">😊</span>
+    <div>
+      <div class="font-bold text-green-800 text-xl">All Good Today!</div>
+      <div class="text-green-700 mt-1">Nurse Cathy is here with you.</div>
+    </div>
+  </div>
+
+  <!-- Today's Visit -->
+  <div class="card p-6">
+    <h2 class="card-title font-bold text-gray-800 mb-3">👩‍⚕️ Your Nurse Today</h2>
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 rounded-2xl bg-teal-100 flex items-center justify-center text-3xl">👩‍⚕️</div>
+      <div>
+        <div class="font-bold text-gray-800 text-lg">Nurse Cathy</div>
+        <div class="text-gray-500">RN Cathy Ramirez</div>
+        <div class="text-teal-700 font-semibold mt-1">9:00 AM – 1:00 PM</div>
+      </div>
+    </div>
+    <div class="mt-4 p-3 bg-teal-50 rounded-xl text-teal-700 text-sm font-medium text-center">
+      ✅ Nurse is here now
+    </div>
+  </div>
+
+  <!-- Vitals -->
+  <div class="card p-6">
+    <h2 class="card-title font-bold text-gray-800 mb-4">❤️ Your Health Today</h2>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="vital-box vital-normal">
+        <div class="text-3xl mb-1">❤️</div>
+        <div class="font-bold text-gray-800 text-2xl">118/76</div>
+        <div class="text-gray-500 text-sm">Blood Pressure</div>
+        <div class="text-green-600 font-semibold mt-1 text-sm">✓ Normal</div>
+      </div>
+      <div class="vital-box vital-normal">
+        <div class="text-3xl mb-1">💓</div>
+        <div class="font-bold text-gray-800 text-2xl">72</div>
+        <div class="text-gray-500 text-sm">Heart Rate</div>
+        <div class="text-green-600 font-semibold mt-1 text-sm">✓ Normal</div>
+      </div>
+      <div class="vital-box vital-normal">
+        <div class="text-3xl mb-1">🌡️</div>
+        <div class="font-bold text-gray-800 text-2xl">36.6°</div>
+        <div class="text-gray-500 text-sm">Temperature</div>
+        <div class="text-green-600 font-semibold mt-1 text-sm">✓ Normal</div>
+      </div>
+      <div class="vital-box vital-normal">
+        <div class="text-3xl mb-1">🩸</div>
+        <div class="font-bold text-gray-800 text-2xl">110</div>
+        <div class="text-gray-500 text-sm">Blood Sugar</div>
+        <div class="text-green-600 font-semibold mt-1 text-sm">✓ Normal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medications -->
+  <div class="card p-6">
+    <h2 class="card-title font-bold text-gray-800 mb-4">💊 Your Medicines Today</h2>
+    <div>
+      <div class="med-row flex items-center justify-between">
+        <div>
+          <div class="font-semibold text-gray-800">Amlodipine 5mg</div>
+          <div class="text-gray-500 text-sm">Morning · For Blood Pressure</div>
+        </div>
+        <span class="px-3 py-1.5 rounded-full text-sm font-bold bg-green-100 text-green-700">✅ Given</span>
+      </div>
+      <div class="med-row flex items-center justify-between">
+        <div>
+          <div class="font-semibold text-gray-800">Metformin 500mg</div>
+          <div class="text-gray-500 text-sm">Morning · For Diabetes</div>
+        </div>
+        <span class="px-3 py-1.5 rounded-full text-sm font-bold bg-green-100 text-green-700">✅ Given</span>
+      </div>
+      <div class="med-row flex items-center justify-between">
+        <div>
+          <div class="font-semibold text-gray-800">Losartan 50mg</div>
+          <div class="text-gray-500 text-sm">Evening · For Blood Pressure</div>
+        </div>
+        <span class="px-3 py-1.5 rounded-full text-sm font-bold bg-yellow-100 text-yellow-700">⏳ Later</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Consent / Data Sharing Notice -->
+  <div class="consent-banner p-5 mb-4">
+    <div class="font-bold text-gray-800 mb-2">📢 Who Can See Your Health Info?</div>
+    <p class="text-gray-600 text-sm mb-3">Your health information is shared with:</p>
+    <div class="flex items-center gap-3 mb-3 p-3 bg-white rounded-xl">
+      <span class="text-xl">👩</span>
+      <div>
+        <div class="font-semibold text-gray-800">Maria Santos (Your Daughter)</div>
+        <div class="text-xs text-gray-500">OFW Family Member</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="giveConsent()" class="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm hover:bg-green-700">
+        ✓ That's Okay
+      </button>
+      <button onclick="viewPrivacyPolicy()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200">
+        Learn More
+      </button>
+    </div>
+  </div>
+
+  <!-- Emergency Button -->
+  <button onclick="showEmergencyModal()" class="emergency-btn w-full py-6 text-white font-bold text-xl mb-4"
+    role="button" aria-label="Emergency Help Button">
+    🚨 EMERGENCY HELP
+  </button>
+
+  <!-- Contact Family -->
+  <div class="card p-5">
+    <h2 class="card-title font-bold text-gray-800 mb-3">📞 Contact Family</h2>
+    <button onclick="showToast('Calling Maria (your daughter)... 📞')"
+      class="w-full py-4 rounded-2xl bg-blue-50 border-2 border-blue-200 text-blue-700 font-bold text-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-3">
+      📞 Call Maria (Daughter)
+    </button>
+  </div>
+
+  <!-- Privacy Policy Link -->
+  <div class="text-center py-4">
+    <button onclick="viewPrivacyPolicy()" class="text-teal-700 font-semibold underline text-sm" aria-label="View Privacy Policy">
+      🔒 View Privacy Policy
+    </button>
+  </div>
+
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 px-4 py-3" role="navigation" aria-label="Main navigation">
+  <div class="flex justify-around max-w-lg mx-auto">
+    <button onclick="scrollToTop()" class="flex flex-col items-center gap-1 text-teal-700" aria-label="Home">
+      <span class="text-2xl">🏠</span>
+      <span class="text-xs font-semibold">Home</span>
+    </button>
+    <button onclick="showToast('📊 Showing your health history')" class="flex flex-col items-center gap-1 text-gray-500" aria-label="Health">
+      <span class="text-2xl">❤️</span>
+      <span class="text-xs font-medium">Health</span>
+    </button>
+    <button onclick="showToast('💊 Showing your medicines')" class="flex flex-col items-center gap-1 text-gray-500" aria-label="Medicines">
+      <span class="text-2xl">💊</span>
+      <span class="text-xs font-medium">Medicines</span>
+    </button>
+    <button onclick="viewPrivacyPolicy()" class="flex flex-col items-center gap-1 text-gray-500" aria-label="Privacy">
+      <span class="text-2xl">🔒</span>
+      <span class="text-xs font-medium">Privacy</span>
+    </button>
+  </div>
+</nav>
+
+<script src="../../scripts/auth/auth.js"></script>
+<script src="../../scripts/shared/db.js"></script>
+<script>
+  const currentUser = Auth.requireAuth('senior');
+  if (!currentUser) throw new Error('Redirecting...');
+
+  // ── Accessibility Toggles ──────────────────────────────────
+  let largeFontOn = false;
+  let highContrastOn = false;
+
+  function toggleFont() {
+    largeFontOn = !largeFontOn;
+    document.body.classList.toggle('large-font', largeFontOn);
+    document.getElementById('btn-font').classList.toggle('active', largeFontOn);
+    AuditLog.write({ action: 'ACCESSIBILITY_TOGGLE', resource: 'senior_dashboard', details: { setting: 'large_font', enabled: largeFontOn } });
+    showToast(largeFontOn ? '🔠 Large font ON' : '🔤 Normal font');
+  }
+
+  function toggleContrast() {
+    highContrastOn = !highContrastOn;
+    document.body.classList.toggle('high-contrast', highContrastOn);
+    document.getElementById('btn-contrast').classList.toggle('active', highContrastOn);
+    AuditLog.write({ action: 'ACCESSIBILITY_TOGGLE', resource: 'senior_dashboard', details: { setting: 'high_contrast', enabled: highContrastOn } });
+    showToast(highContrastOn ? '🟡 High contrast ON' : '⚪ Normal contrast');
+  }
+
+  // ── Emergency ──────────────────────────────────────────────
+  function showEmergencyModal() {
+    document.getElementById('emergency-modal').classList.remove('hidden');
+    document.getElementById('emergency-modal').classList.add('flex');
+  }
+  function closeEmergencyModal() {
+    document.getElementById('emergency-modal').classList.add('hidden');
+    document.getElementById('emergency-modal').classList.remove('flex');
+  }
+  function triggerEmergency() {
+    closeEmergencyModal();
+    AuditLog.write({ action: 'SENIOR_EMERGENCY', resource: 'emergency_alerts', details: { user_id: currentUser.id } });
+    showToast('🚨 Help is on the way! Nurse Cathy and Maria have been notified!');
+  }
+
+  // ── Consent ────────────────────────────────────────────────
+  function giveConsent() {
+    AuditLog.write({ action: 'CONSENT_GIVEN', resource: 'consent', details: { user_id: currentUser.id, proxy_for: 'Rosa dela Cruz' } });
+    showToast('✅ Thank you! Your consent has been saved.');
+  }
+
+  function viewPrivacyPolicy() {
+    showToast('📄 Privacy policy: Your data is safe and only shared with your family and nurse. You can change this anytime.');
+  }
+
+  // ── Scroll to top ──────────────────────────────────────────
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Toast ─────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    clearTimeout(toastTimer);
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'senior_dashboard', details: { user_id: currentUser.id } });
+</script>
+</body>
+</html>

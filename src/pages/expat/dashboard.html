@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family CareLink — Expat Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f5f3ff; }
+    .sidebar { width: 260px; min-height: 100vh; background: #5b21b6; }
+    .nav-item { transition: all 0.15s; border-radius: 10px; }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); }
+    .card { background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .audit-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .input-field { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; font-size: 14px; width: 100%; transition: border-color 0.2s; }
+    .input-field:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+    .lang-btn { border: 2px solid #e5e7eb; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+    .lang-btn.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+    .lang-btn:hover { border-color: #8b5cf6; }
+    .hospital-card { border: 1.5px solid #e5e7eb; border-radius: 14px; transition: all 0.2s; }
+    .hospital-card:hover { border-color: #8b5cf6; box-shadow: 0 4px 12px rgba(139,92,246,0.12); }
+    .tag { border-radius: 9999px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+    .toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (max-width: 768px) { .sidebar { display: none; } .mobile-nav { display: flex; } }
+    @media (min-width: 769px) { .mobile-nav { display: none; } }
+  </style>
+</head>
+<body>
+
+<div id="toast" class="toast">
+  <div class="bg-gray-800 text-white px-4 py-3 rounded-xl text-sm shadow-lg flex items-center gap-2">
+    <span id="toast-icon">✅</span><span id="toast-msg">Done</span>
+  </div>
+</div>
+
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="sidebar hidden md:flex flex-col">
+    <div class="p-6 border-b border-purple-700">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm">🌏</div>
+        <div>
+          <div class="text-white font-semibold text-sm">Family CareLink</div>
+          <div class="text-purple-300 text-xs">Expat Branch</div>
+        </div>
+      </div>
+      <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background:rgba(139,92,246,0.2);color:#c4b5fd">
+        <span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span>
+        Baguio City, Philippines
+      </div>
+    </div>
+    <div class="p-4 border-b border-purple-700">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold">JM</div>
+        <div>
+          <div class="text-white text-sm font-medium" id="sidebar-name">James Miller</div>
+          <div class="text-purple-300 text-xs">Expat Member · 🇺🇸 English</div>
+        </div>
+      </div>
+    </div>
+    <!-- Language Selector Sidebar -->
+    <div class="px-4 py-3 border-b border-purple-700">
+      <div class="text-xs text-purple-300 mb-2 font-medium">Language / Wika</div>
+      <div class="flex flex-wrap gap-1.5" id="lang-btns-sidebar">
+        <button onclick="setLanguage('en')" class="lang-btn text-white border-purple-400 active" data-lang="en">🇺🇸 EN</button>
+        <button onclick="setLanguage('es')" class="lang-btn text-purple-200 border-purple-600" data-lang="es">🇪🇸 ES</button>
+        <button onclick="setLanguage('ko')" class="lang-btn text-purple-200 border-purple-600" data-lang="ko">🇰🇷 KO</button>
+        <button onclick="setLanguage('ja')" class="lang-btn text-purple-200 border-purple-600" data-lang="ja">🇯🇵 JA</button>
+      </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showSection('overview')" data-section="overview" class="nav-item active flex items-center gap-3 px-3 py-2.5 text-white text-sm">
+        <span>🏠</span> <span data-i18n="nav_overview">Overview</span>
+      </a>
+      <a href="#" onclick="showSection('hospitals')" data-section="hospitals" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>🏥</span> <span data-i18n="nav_hospitals">Hospital Directory</span>
+      </a>
+      <a href="#" onclick="showSection('coordination')" data-section="coordination" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>🤝</span> <span data-i18n="nav_coordination">Care Coordination</span>
+      </a>
+      <a href="#" onclick="showSection('privacy')" data-section="privacy" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>🔒</span> <span data-i18n="nav_privacy">Privacy & Consent</span>
+      </a>
+    </nav>
+    <div class="p-4 border-t border-purple-700">
+      <div class="flex items-center gap-2 text-xs text-purple-300 mb-2">
+        <div class="audit-dot"></div><span>Audit logging active</span>
+      </div>
+      <button onclick="Auth.signOut()" class="w-full py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-medium transition-colors">
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6">
+
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-800" id="page-title" data-i18n="page_overview">Overview</h1>
+        <p class="text-gray-500 text-sm">Baguio City, Philippines · June 25, 2026</p>
+      </div>
+      <!-- Mobile lang toggle -->
+      <div class="flex gap-1 md:hidden">
+        <button onclick="setLanguage('en')" class="lang-btn text-xs active" data-lang="en">EN</button>
+        <button onclick="setLanguage('es')" class="lang-btn text-xs" data-lang="es">ES</button>
+        <button onclick="setLanguage('ko')" class="lang-btn text-xs" data-lang="ko">KO</button>
+        <button onclick="setLanguage('ja')" class="lang-btn text-xs" data-lang="ja">JA</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION: Overview -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="section-overview">
+
+      <!-- Welcome Card -->
+      <div class="card p-5 mb-4" style="border-left: 5px solid #8b5cf6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-3xl">🌍</span>
+          <div>
+            <div class="font-bold text-gray-800" data-i18n="welcome_title">Welcome, James!</div>
+            <div class="text-sm text-gray-500" data-i18n="welcome_sub">Your dedicated care coordinator is ready to assist.</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+          <div class="w-10 h-10 rounded-xl bg-purple-200 flex items-center justify-center text-lg">👩‍💼</div>
+          <div>
+            <div class="font-semibold text-gray-800 text-sm" data-i18n="coordinator_name">Maria Reyes — Care Coordinator</div>
+            <div class="text-xs text-gray-500" data-i18n="coordinator_available">Available 8:00 AM – 6:00 PM</div>
+          </div>
+          <button onclick="showToast('Contacting Maria Reyes, Care Coordinator...', '📞')"
+            class="ml-auto px-3 py-1.5 rounded-lg text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200">
+            <span data-i18n="btn_contact">Contact</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Services -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button onclick="showSection('hospitals')" class="card p-4 text-left hover:shadow-md transition-shadow">
+          <div class="text-2xl mb-2">🏥</div>
+          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_hospitals">Hospital Directory</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_hospitals_sub">Find local hospitals</div>
+        </button>
+        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
+          <div class="text-2xl mb-2">🌐</div>
+          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_translation">Medical Translation</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_translation_sub">We speak your language</div>
+        </button>
+        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
+          <div class="text-2xl mb-2">📋</div>
+          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_appointment">Book Appointment</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_appointment_sub">Schedule a visit</div>
+        </button>
+        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
+          <div class="text-2xl mb-2">🛡️</div>
+          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_insurance">Insurance</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_insurance_sub">International coverage</div>
+        </button>
+      </div>
+
+      <!-- Emergency Contacts -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-gray-800 mb-3" data-i18n="emergency_contacts">Emergency Contacts</h3>
+        <div class="space-y-2">
+          <a href="tel:117" class="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
+            <span class="text-xl">🚑</span>
+            <div>
+              <div class="font-semibold text-red-700 text-sm" data-i18n="emergency_ambulance">Ambulance</div>
+              <div class="text-xs text-red-500">117</div>
+            </div>
+          </a>
+          <a href="tel:+6374442727" class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors">
+            <span class="text-xl">🏥</span>
+            <div>
+              <div class="font-semibold text-blue-700 text-sm">Baguio General Hospital</div>
+              <div class="text-xs text-blue-500">+63 74 442-7727</div>
+            </div>
+          </a>
+          <button onclick="showToast('Calling Care Coordinator Maria Reyes...', '📞')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors text-left">
+            <span class="text-xl">👩‍💼</span>
+            <div>
+              <div class="font-semibold text-purple-700 text-sm" data-i18n="call_coordinator">Call Care Coordinator</div>
+              <div class="text-xs text-purple-500">Maria Reyes · Available now</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION: Hospital Directory -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="section-hospitals" class="hidden">
+      <div class="mb-4">
+        <input type="text" class="input-field" placeholder="Search hospitals, clinics..." data-i18n-placeholder="search_hospitals" />
+      </div>
+      <div class="space-y-3">
+        <div class="hospital-card p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="font-bold text-gray-800">Baguio General Hospital</div>
+              <div class="text-xs text-gray-500">Baguio City · Government</div>
+            </div>
+            <span class="tag bg-green-100 text-green-700">Emergency</span>
+          </div>
+          <div class="text-xs text-gray-500 mb-2">📍 Governor Pack Road · ⭐ 4.2/5</div>
+          <div class="text-xs text-gray-600 mb-3">Services: General Medicine, Cardiology, Pediatrics, OB-GYN</div>
+          <div class="flex gap-2">
+            <button onclick="showToast('Requesting accompaniment to Baguio General...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
+            <button onclick="showToast('Calling Baguio General Hospital...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
+          </div>
+        </div>
+
+        <div class="hospital-card p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="font-bold text-gray-800">Saint Louis University Hospital</div>
+              <div class="text-xs text-gray-500">Baguio City · Private</div>
+            </div>
+            <span class="tag bg-blue-100 text-blue-700">Private</span>
+          </div>
+          <div class="text-xs text-gray-500 mb-2">📍 A. Bonifacio Street · ⭐ 4.6/5</div>
+          <div class="text-xs text-gray-600 mb-3">Services: Cardiology, Neurology, Orthopedics, Oncology</div>
+          <div class="flex gap-2">
+            <button onclick="showToast('Requesting accompaniment to SLU Hospital...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
+            <button onclick="showToast('Calling SLU Hospital...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
+          </div>
+        </div>
+
+        <div class="hospital-card p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="font-bold text-gray-800">Notre Dame de Chartres Hospital</div>
+              <div class="text-xs text-gray-500">Baguio City · Private Catholic</div>
+            </div>
+            <span class="tag bg-purple-100 text-purple-700">Specialty</span>
+          </div>
+          <div class="text-xs text-gray-500 mb-2">📍 Corner of Bokawkan Rd · ⭐ 4.5/5</div>
+          <div class="text-xs text-gray-600 mb-3">Services: Rehabilitation, Geriatrics, Internal Medicine</div>
+          <div class="flex gap-2">
+            <button onclick="showToast('Requesting accompaniment to NDCH...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
+            <button onclick="showToast('Calling NDCH...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION: Care Coordination -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="section-coordination" class="hidden">
+
+      <!-- Book Appointment -->
+      <div class="card p-5 mb-4">
+        <h3 class="font-semibold text-gray-800 mb-4" data-i18n="book_appointment">📋 Book Appointment</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5" data-i18n="hospital_label">Hospital / Clinic</label>
+            <select class="input-field">
+              <option>Baguio General Hospital</option>
+              <option>Saint Louis University Hospital</option>
+              <option>Notre Dame de Chartres Hospital</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5" data-i18n="service_label">Service Needed</label>
+            <select class="input-field">
+              <option data-i18n="service_general">General Check-up</option>
+              <option>Cardiology</option>
+              <option>Lab Tests</option>
+              <option>Specialist Consultation</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5" data-i18n="date_label">Preferred Date</label>
+            <input type="date" class="input-field" value="2026-06-28" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1.5" data-i18n="extras_label">Additional Services</label>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked style="accent-color:#8b5cf6" />
+                <span data-i18n="translation_service">🌐 Medical Translation (English)</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" style="accent-color:#8b5cf6" />
+                <span data-i18n="accompaniment_service">🤝 Nurse Accompaniment</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" style="accent-color:#8b5cf6" />
+                <span data-i18n="insurance_service">🛡️ Insurance Coordination</span>
+              </label>
+            </div>
+          </div>
+          <button onclick="showToast('Appointment request submitted! Coordinator will confirm within 2 hours.', '📋')"
+            class="w-full py-3 rounded-xl text-white font-semibold text-sm hover:opacity-90" style="background:#8b5cf6">
+            <span data-i18n="btn_submit_appointment">Submit Request</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Coordination History -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-gray-800 mb-3" data-i18n="coordination_history">Coordination History</h3>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <span class="text-xl">✅</span>
+            <div>
+              <div class="text-sm font-medium text-gray-800">Lab Test — Baguio General</div>
+              <div class="text-xs text-gray-400">June 10, 2026 · Translation provided</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <span class="text-xl">✅</span>
+            <div>
+              <div class="text-sm font-medium text-gray-800">Cardiology — SLU Hospital</div>
+              <div class="text-xs text-gray-400">May 22, 2026 · Accompaniment + Insurance</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION: Privacy & Consent -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="section-privacy" class="hidden">
+      <div class="card p-5 mb-4">
+        <h3 class="font-semibold text-gray-800 mb-4" data-i18n="privacy_title">🔒 Privacy & Consent</h3>
+        <div class="space-y-3">
+          <div class="p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+            <span class="text-xl">✅</span>
+            <div>
+              <div class="font-medium text-gray-800 text-sm" data-i18n="consent_status">Consent Status</div>
+              <div class="text-xs text-green-600" data-i18n="consent_active">Active · Expires January 15, 2027</div>
+            </div>
+          </div>
+          <div class="text-xs text-gray-600 p-3 bg-gray-50 rounded-xl" data-i18n="privacy_explanation">
+            Your health information is only shared with your designated care coordinator and authorized Family CareLink staff. You can revoke consent at any time.
+          </div>
+          <button onclick="showToast('Consent revocation request submitted. Admin will contact you.', '🔒')"
+            class="w-full py-2.5 rounded-xl text-sm font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100" data-i18n="btn_revoke">
+            Revoke Consent
+          </button>
+        </div>
+      </div>
+
+      <!-- Privacy Policy in multiple languages -->
+      <div class="card p-5">
+        <h3 class="font-semibold text-gray-800 mb-3" data-i18n="privacy_policy_title">Privacy Policy</h3>
+        <div class="space-y-2">
+          <button onclick="showToast('Opening Privacy Policy in English...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇺🇸</span> <span class="text-sm text-gray-700">Privacy Policy — English</span>
+          </button>
+          <button onclick="showToast('Abriendo política de privacidad en español...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇪🇸</span> <span class="text-sm text-gray-700">Política de Privacidad — Español</span>
+          </button>
+          <button onclick="showToast('개인정보 처리방침을 여는 중...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇰🇷</span> <span class="text-sm text-gray-700">개인정보 처리방침 — 한국어</span>
+          </button>
+          <button onclick="showToast('プライバシーポリシーを開く...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇯🇵</span> <span class="text-sm text-gray-700">プライバシーポリシー — 日本語</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile Nav -->
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2">
+  <div class="flex justify-around">
+    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-purple-700 py-1 px-3">
+      <span class="text-lg">🏠</span> <span data-i18n="nav_overview">Home</span>
+    </button>
+    <button onclick="showSection('hospitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+      <span class="text-lg">🏥</span> <span data-i18n="nav_hospitals">Hospitals</span>
+    </button>
+    <button onclick="showSection('coordination')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+      <span class="text-lg">🤝</span> <span data-i18n="nav_coordination">Book</span>
+    </button>
+    <button onclick="showSection('privacy')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+      <span class="text-lg">🔒</span> <span data-i18n="nav_privacy">Privacy</span>
+    </button>
+  </div>
+</nav>
+
+<script src="../../scripts/auth/auth.js"></script>
+<script src="../../scripts/shared/db.js"></script>
+<script>
+  const currentUser = Auth.requireAuth('expat');
+  if (!currentUser) throw new Error('Redirecting...');
+  document.getElementById('sidebar-name').textContent = currentUser.name;
+
+  // ── i18n Strings ───────────────────────────────────────────
+  const translations = {
+    en: {
+      nav_overview: 'Overview', nav_hospitals: 'Hospitals', nav_coordination: 'Coordination', nav_privacy: 'Privacy',
+      welcome_title: 'Welcome, James!', welcome_sub: 'Your dedicated care coordinator is ready to assist.',
+      coordinator_name: 'Maria Reyes — Care Coordinator', coordinator_available: 'Available 8:00 AM – 6:00 PM',
+      btn_contact: 'Contact', service_hospitals: 'Hospital Directory', service_hospitals_sub: 'Find local hospitals',
+      service_translation: 'Medical Translation', service_translation_sub: 'We speak your language',
+      service_appointment: 'Book Appointment', service_appointment_sub: 'Schedule a visit',
+      service_insurance: 'Insurance', service_insurance_sub: 'International coverage',
+      emergency_contacts: 'Emergency Contacts', emergency_ambulance: 'Ambulance', call_coordinator: 'Call Care Coordinator',
+      book_appointment: '📋 Book Appointment', hospital_label: 'Hospital / Clinic', service_label: 'Service Needed',
+      date_label: 'Preferred Date', extras_label: 'Additional Services',
+      translation_service: '🌐 Medical Translation (English)', accompaniment_service: '🤝 Nurse Accompaniment',
+      insurance_service: '🛡️ Insurance Coordination', btn_submit_appointment: 'Submit Request',
+      coordination_history: 'Coordination History', privacy_title: '🔒 Privacy & Consent',
+      consent_status: 'Consent Status', consent_active: 'Active · Expires January 15, 2027',
+      privacy_explanation: 'Your health information is only shared with your designated care coordinator and authorized Family CareLink staff. You can revoke consent at any time.',
+      btn_revoke: 'Revoke Consent', privacy_policy_title: 'Privacy Policy', page_overview: 'Overview',
+      service_general: 'General Check-up',
+    },
+    es: {
+      nav_overview: 'Inicio', nav_hospitals: 'Hospitales', nav_coordination: 'Coordinación', nav_privacy: 'Privacidad',
+      welcome_title: '¡Bienvenido, James!', welcome_sub: 'Tu coordinadora de atención está lista para ayudarte.',
+      coordinator_name: 'María Reyes — Coordinadora de Atención', coordinator_available: 'Disponible 8:00 AM – 6:00 PM',
+      btn_contact: 'Contactar', service_hospitals: 'Directorio de Hospitales', service_hospitals_sub: 'Encuentra hospitales locales',
+      service_translation: 'Traducción Médica', service_translation_sub: 'Hablamos tu idioma',
+      service_appointment: 'Reservar Cita', service_appointment_sub: 'Programa una visita',
+      service_insurance: 'Seguro', service_insurance_sub: 'Cobertura internacional',
+      emergency_contacts: 'Contactos de Emergencia', emergency_ambulance: 'Ambulancia',
+      call_coordinator: 'Llamar Coordinadora', book_appointment: '📋 Reservar Cita',
+      hospital_label: 'Hospital / Clínica', service_label: 'Servicio Necesario',
+      date_label: 'Fecha Preferida', extras_label: 'Servicios Adicionales',
+      translation_service: '🌐 Traducción Médica (Español)', accompaniment_service: '🤝 Acompañamiento de Enfermera',
+      insurance_service: '🛡️ Coordinación de Seguro', btn_submit_appointment: 'Enviar Solicitud',
+      coordination_history: 'Historial de Coordinación', privacy_title: '🔒 Privacidad y Consentimiento',
+      consent_status: 'Estado de Consentimiento', consent_active: 'Activo · Expira el 15 de enero de 2027',
+      privacy_explanation: 'Tu información de salud solo se comparte con tu coordinadora y personal autorizado de Family CareLink.',
+      btn_revoke: 'Revocar Consentimiento', privacy_policy_title: 'Política de Privacidad', page_overview: 'Inicio',
+      service_general: 'Chequeo General',
+    },
+    ko: {
+      nav_overview: '홈', nav_hospitals: '병원', nav_coordination: '조정', nav_privacy: '개인정보',
+      welcome_title: '안녕하세요, James님!', welcome_sub: '전담 케어 코디네이터가 도움을 드릴 준비가 되어 있습니다.',
+      coordinator_name: 'Maria Reyes — 케어 코디네이터', coordinator_available: '이용 가능 오전 8시 – 오후 6시',
+      btn_contact: '연락', service_hospitals: '병원 디렉토리', service_hospitals_sub: '현지 병원 찾기',
+      service_translation: '의료 통역', service_translation_sub: '귀하의 언어로 소통합니다',
+      service_appointment: '예약', service_appointment_sub: '방문 일정 잡기',
+      service_insurance: '보험', service_insurance_sub: '국제 보장',
+      emergency_contacts: '긴급 연락처', emergency_ambulance: '구급차',
+      call_coordinator: '코디네이터 전화', book_appointment: '📋 예약하기',
+      hospital_label: '병원 / 클리닉', service_label: '필요한 서비스',
+      date_label: '선호 날짜', extras_label: '추가 서비스',
+      translation_service: '🌐 의료 통역 (한국어)', accompaniment_service: '🤝 간호사 동행',
+      insurance_service: '🛡️ 보험 조정', btn_submit_appointment: '요청 제출',
+      coordination_history: '조정 이력', privacy_title: '🔒 개인정보 및 동의',
+      consent_status: '동의 상태', consent_active: '활성 · 2027년 1월 15일 만료',
+      privacy_explanation: '귀하의 건강 정보는 지정된 케어 코디네이터와 Family CareLink 인증 직원과만 공유됩니다.',
+      btn_revoke: '동의 철회', privacy_policy_title: '개인정보 처리방침', page_overview: '홈',
+      service_general: '일반 검진',
+    },
+    ja: {
+      nav_overview: 'ホーム', nav_hospitals: '病院', nav_coordination: '調整', nav_privacy: 'プライバシー',
+      welcome_title: 'Jamesさん、ようこそ！', welcome_sub: '専任のケアコーディネーターがお手伝いします。',
+      coordinator_name: 'Maria Reyes — ケアコーディネーター', coordinator_available: '午前8時〜午後6時対応',
+      btn_contact: '連絡', service_hospitals: '病院ディレクトリ', service_hospitals_sub: '地元の病院を探す',
+      service_translation: '医療通訳', service_translation_sub: 'あなたの言語で対応',
+      service_appointment: '予約', service_appointment_sub: '訪問のスケジュール',
+      service_insurance: '保険', service_insurance_sub: '国際保障',
+      emergency_contacts: '緊急連絡先', emergency_ambulance: '救急車',
+      call_coordinator: 'コーディネーターに電話', book_appointment: '📋 予約する',
+      hospital_label: '病院 / クリニック', service_label: '必要なサービス',
+      date_label: '希望日', extras_label: '追加サービス',
+      translation_service: '🌐 医療通訳（日本語）', accompaniment_service: '🤝 看護師同行',
+      insurance_service: '🛡️ 保険調整', btn_submit_appointment: 'リクエストを送信',
+      coordination_history: '調整履歴', privacy_title: '🔒 プライバシーと同意',
+      consent_status: '同意状況', consent_active: '有効 · 2027年1月15日まで',
+      privacy_explanation: 'あなたの健康情報は、指定されたケアコーディネーターと承認されたFamily CareLinksスタッフのみと共有されます。',
+      btn_revoke: '同意を取り消す', privacy_policy_title: 'プライバシーポリシー', page_overview: 'ホーム',
+      service_general: '一般健康診断',
+    },
+  };
+
+  let currentLang = 'en';
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (t[key]) el.textContent = t[key];
+    });
+    document.querySelectorAll('[data-lang]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    document.documentElement.lang = lang;
+    AuditLog.write({ action: 'LANGUAGE_CHANGED', resource: 'expat_dashboard', details: { language: lang } });
+    showToast(`Language set to ${lang.toUpperCase()}`, '🌐');
+  }
+
+  // ── Sections ──────────────────────────────────────────────
+  const sections = ['overview', 'hospitals', 'coordination', 'privacy'];
+
+  function showSection(name) {
+    sections.forEach(s => document.getElementById('section-' + s)?.classList.add('hidden'));
+    document.getElementById('section-' + name)?.classList.remove('hidden');
+    document.querySelectorAll('[data-section]').forEach(el => {
+      el.classList.toggle('active', el.dataset.section === name);
+      el.classList.toggle('text-white', el.dataset.section === name);
+      el.classList.toggle('text-purple-200', el.dataset.section !== name);
+    });
+    const t = translations[currentLang];
+    const titleMap = { overview: 'page_overview', hospitals: 'nav_hospitals', coordination: 'nav_coordination', privacy: 'nav_privacy' };
+    if (t[titleMap[name]]) document.getElementById('page-title').textContent = t[titleMap[name]];
+    return false;
+  }
+
+  // ── Toast ─────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, icon = '✅') {
+    clearTimeout(toastTimer);
+    document.getElementById('toast-msg').textContent = msg;
+    document.getElementById('toast-icon').textContent = icon;
+    document.getElementById('toast').classList.add('show');
+    toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 3500);
+  }
+
+  AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'expat_dashboard', details: { user_id: currentUser.id, language: currentLang } });
+</script>
+</body>
+</html>

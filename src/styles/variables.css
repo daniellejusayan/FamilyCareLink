@@ -1,0 +1,83 @@
+/* ============================================
+   Family CareLink — Design System Variables
+   ============================================ */
+
+:root {
+  /* Brand Colors */
+  --brand-primary: #0f766e;
+  --brand-secondary: #14b8a6;
+  --brand-accent: #b45309;
+  --brand-light: #f0fdfa;
+
+  /* Branch Indicators */
+  --branch-ofw: #2563eb;
+  --branch-expat: #8b5cf6;
+  --branch-senior: #dc2626;
+  --branch-corporate: #059669;
+
+  /* Status Colors */
+  --status-good: #16a34a;
+  --status-warning: #d97706;
+  --status-alert: #dc2626;
+
+  /* Privacy UI Tokens */
+  --audit-dot-color: #22c55e;
+  --consent-active: #22c55e;
+  --consent-expired: #dc2626;
+  --break-glass: #f59e0b;
+  --masked-color: #9ca3af;
+
+  /* Accessibility */
+  --accessible-large-font: 24px;
+  --accessible-high-contrast-bg: #000000;
+  --accessible-high-contrast-text: #ffff00;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 6px 28px rgba(0, 0, 0, 0.15);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+}
+
+/* High Contrast Mode (Senior Accessibility) */
+body.high-contrast {
+  --brand-primary: #ffffff;
+  --brand-secondary: #ffff00;
+  --brand-light: #000000;
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+
+body.high-contrast * {
+  border-color: #ffff00 !important;
+}
+
+/* Large Font Mode */
+body.large-font {
+  font-size: var(--accessible-large-font) !important;
+}
+
+body.large-font p,
+body.large-font span,
+body.large-font label,
+body.large-font button {
+  font-size: 1.2em !important;
+}
