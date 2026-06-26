@@ -146,11 +146,20 @@
     </nav>
 
     <!-- Footer -->
-    <div class="p-4 border-t border-red-800 space-y-2">
-      <div class="flex items-center gap-2 text-xs text-red-300 mb-1">
-        <div class="audit-dot"></div><span>Audit logging active</span>
+    <div style="position:sticky;bottom:0;background:#b91c1c;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);z-index:10">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="sidebar-avatar" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">—</div>
+        <div style="min-width:0">
+          <div id="sidebar-name" style="color:white;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Loading...</div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+            <div class="audit-dot"></div>
+            <span style="font-size:11px;color:#fca5a5">Audit logging active</span>
+          </div>
+        </div>
       </div>
-      <button onclick="Auth.signOut()" class="btn-signout w-full">
+      <button onclick="openSignOutModal()"
+        style="width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid rgba(252,165,165,0.4);background:rgba(127,29,29,0.6);color:#fca5a5;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background 0.2s"
+        onmouseover="this.style.background='rgba(127,29,29,0.9)';this.style.color='white'" onmouseout="this.style.background='rgba(127,29,29,0.6)';this.style.color='#fca5a5'">
         🚪 Sign Out
       </button>
     </div>
@@ -165,10 +174,9 @@
         <h1 class="text-xl font-bold text-gray-800" id="page-title">Overview</h1>
         <p class="text-gray-500 text-sm" id="page-subtitle">Caring for Lola Rosa · Baguio City</p>
       </div>
-      <!-- Mobile sign-out + emergency -->
+      <!-- Mobile emergency only -->
       <div class="flex items-center gap-2 md:hidden">
         <button onclick="openModal('emergency-modal')" class="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-bold">🚨 SOS</button>
-        <button onclick="Auth.signOut()" class="px-3 py-2 rounded-xl bg-red-100 text-red-700 text-xs font-bold border border-red-200">🚪 Out</button>
       </div>
       <!-- Desktop actions -->
       <div class="hidden md:flex items-center gap-2">
@@ -561,23 +569,28 @@
 </div>
 
 <!-- Mobile Bottom Nav -->
-<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2" style="display:none">
-  <div class="flex justify-around">
-    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-red-700 py-1 px-2">
-      <span class="text-lg">🏠</span>Home
+<style>
+.sn-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:11px; font-weight:600; padding:6px 0; flex:1; min-width:0; text-align:center; border-radius:10px; transition:all 0.15s; color:#6b7280; background:none; border:none; cursor:pointer; }
+.sn-btn.active { color:#b91c1c; background:#fff5f5; }
+</style>
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-1" style="display:none">
+  <div class="flex items-end w-full">
+    <button onclick="switchSeniorNav('overview')" id="sn-overview" class="sn-btn active">
+      <span class="text-xl">🏠</span><span>Home</span>
     </button>
-    <button onclick="showSection('vitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">❤️</span>Vitals
+    <button onclick="switchSeniorNav('vitals')" id="sn-vitals" class="sn-btn">
+      <span class="text-xl">❤️</span><span>Vitals</span>
     </button>
-    <button onclick="showSection('medications')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">💊</span>Meds
+    <button onclick="switchSeniorNav('medications')" id="sn-medications" class="sn-btn">
+      <span class="text-xl">💊</span><span>Meds</span>
     </button>
-    <button onclick="showSection('messages')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">💬</span>Chat
+    <button onclick="switchSeniorNav('messages')" id="sn-messages" class="sn-btn">
+      <span class="text-xl">💬</span><span>Chat</span>
     </button>
-    <button onclick="showSection('billing')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">💳</span>Billing
+    <button onclick="switchSeniorNav('billing')" id="sn-billing" class="sn-btn">
+      <span class="text-xl">💳</span><span>Billing</span>
     </button>
+
   </div>
 </nav>
 
@@ -587,6 +600,14 @@
   const currentUser = Auth.requireAuth('senior');
   if (!currentUser) throw new Error('Redirecting...');
   document.getElementById('sidebar-name').textContent = currentUser.name || 'Local Family';
+  // Set sidebar avatar initials
+  (function() {
+    const n = currentUser?.name || '';
+    const parts = n.trim().split(' ').filter(Boolean);
+    const initials = parts.length >= 2 ? parts[0][0] + parts[parts.length-1][0] : (parts[0]?.[0] || 'C');
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (avatarEl) avatarEl.textContent = initials.toUpperCase();
+  })();
 
   // ── Sections ──────────────────────────────────────────────
   const SECTIONS = ['overview','vitals','care-logs','medications','messages','billing','audit'];
@@ -610,6 +631,11 @@
       el.classList.toggle('text-white', el.dataset.section === name);
       el.classList.toggle('text-red-200', el.dataset.section !== name);
     });
+    // Sync mobile nav active state
+    ['overview','vitals','medications','messages','billing'].forEach(s => {
+      const btn = document.getElementById('sn-' + s);
+      if (btn) btn.classList.toggle('active', s === name);
+    });
     const [title, sub] = SECTION_TITLES[name] || ['', ''];
     document.getElementById('page-title').textContent = title;
     document.getElementById('page-subtitle').textContent = sub;
@@ -621,6 +647,8 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return false;
   }
+
+  function switchSeniorNav(name) { showSection(name); }
 
   // ── Vitals Chart ──────────────────────────────────────────
   const VITALS_DATA = {
@@ -816,6 +844,45 @@
   // ── Init ──────────────────────────────────────────────────
   document.getElementById('unread-badge').classList.toggle('hidden', DB.getUnreadCount('usr_001') === 0);
   AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'senior_dashboard', details: { user_id: currentUser.id, category: 'local_ph' } });
+
+  // ── Sign-Out Confirmation ─────────────────────────────────
+  function openSignOutModal() {
+    const name = (typeof currentUser !== 'undefined' && currentUser?.name)
+      ? currentUser.name
+      : document.getElementById('sidebar-name')?.textContent || 'this account';
+    document.getElementById('signout-name').textContent = name;
+    document.getElementById('signout-modal').style.display = 'flex';
+  }
+  function closeSignOutModal() {
+    document.getElementById('signout-modal').style.display = 'none';
+  }
+  function confirmSignOut() {
+    closeSignOutModal();
+    Auth.signOut();
+  }
 </script>
+<!-- Sign-Out Confirmation Modal -->
+<div id="signout-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:20px">
+  <div style="background:white;border-radius:24px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center">
+    <div style="font-size:44px;margin-bottom:12px">🚪</div>
+    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:6px">Sign out of Family CareLink?</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6">
+      You are signed in as <strong id="signout-name" style="color:#374151">—</strong>.<br>
+      Signing out will end your session and clear your login from this device.<br>
+      Any unsaved changes will be lost.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="closeSignOutModal()"
+        style="padding:13px;border-radius:12px;border:1.5px solid #e5e7eb;background:white;color:#374151;font-size:14px;font-weight:600;cursor:pointer">
+        Cancel
+      </button>
+      <button onclick="confirmSignOut()"
+        style="padding:13px;border-radius:12px;border:none;background:#dc2626;color:white;font-size:14px;font-weight:700;cursor:pointer">
+        Yes, Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

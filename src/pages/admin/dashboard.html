@@ -36,6 +36,13 @@
     .toast.show { transform: translateY(0); opacity: 1; }
     @media (max-width: 768px) { .sidebar { display: none; } .mobile-nav { display: flex; } }
     @media (min-width: 769px) { .mobile-nav { display: none; } }
+    .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 600; padding: 6px 0; flex: 1; min-width: 0; text-align: center; border-radius: 10px; transition: all 0.15s; color: #6b7280; background: none; border: none; cursor: pointer; }
+    .mobile-nav-btn.active { color: #0f766e; background: #f0fdfa; }
+    /* Patient table — prevent cut-off on mobile */
+    @media (max-width: 768px) {
+      .patient-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .patient-table-wrap table { min-width: 420px; }
+    }
   </style>
 </head>
 <body>
@@ -88,12 +95,22 @@
         <span>📈</span> Reports
       </a>
     </nav>
-    <div class="p-4 border-t border-teal-700">
-      <div class="flex items-center gap-2 text-xs text-teal-300 mb-2">
-        <div class="audit-dot"></div><span>Audit logging active</span>
+    <!-- Sticky Sidebar Footer — Profile + Sign Out -->
+    <div style="position:sticky;bottom:0;background:inherit;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);z-index:10">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="sidebar-avatar" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">—</div>
+        <div style="min-width:0">
+          <div id="sidebar-name" style="color:white;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Loading...</div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+            <div class="audit-dot"></div>
+            <span style="font-size:11px;color:rgba(153,246,228,1)">rgba(153,246,228,1)</span>
+          </div>
+        </div>
       </div>
-      <button onclick="Auth.signOut()" class="w-full py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white text-xs font-medium transition-colors">
-        Sign Out
+      <button onclick="openSignOutModal()"
+        style="width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:white;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background 0.2s"
+        onmouseover="this.style.background='rgba(255,255,255,0.16)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        🚪 Sign Out
       </button>
     </div>
   </aside>
@@ -216,7 +233,7 @@
           + Enroll Patient
         </button>
       </div>
-      <div class="card overflow-hidden">
+      <div class="card overflow-hidden patient-table-wrap">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -471,23 +488,24 @@
 </div>
 
 <!-- Mobile Nav -->
-<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2">
-  <div class="flex justify-around">
-    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-teal-700 py-1 px-2">
-      <span class="text-lg">📊</span> Overview
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-1">
+  <div class="flex items-end w-full">
+    <button onclick="switchAdminNav('overview')" id="an-overview" class="mobile-nav-btn active">
+      <span class="text-xl">📊</span><span>Overview</span>
     </button>
-    <button onclick="showSection('patients')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">👥</span> Patients
+    <button onclick="switchAdminNav('patients')" id="an-patients" class="mobile-nav-btn">
+      <span class="text-xl">👥</span><span>Patients</span>
     </button>
-    <button onclick="showSection('consent')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">✅</span> Consent
+    <button onclick="switchAdminNav('consent')" id="an-consent" class="mobile-nav-btn">
+      <span class="text-xl">✅</span><span>Consent</span>
     </button>
-    <button onclick="showSection('billing')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">💳</span> Billing
+    <button onclick="switchAdminNav('billing')" id="an-billing" class="mobile-nav-btn">
+      <span class="text-xl">💳</span><span>Billing</span>
     </button>
-    <button onclick="showSection('reports')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
-      <span class="text-lg">📈</span> Reports
+    <button onclick="switchAdminNav('reports')" id="an-reports" class="mobile-nav-btn">
+      <span class="text-xl">📈</span><span>Reports</span>
     </button>
+
   </div>
 </nav>
 
@@ -497,6 +515,14 @@
   const currentUser = Auth.requireAuth('admin');
   if (!currentUser) throw new Error('Redirecting...');
   document.getElementById('sidebar-name').textContent = currentUser.name;
+  // Set sidebar avatar initials
+  (function() {
+    const n = currentUser?.name || '';
+    const parts = n.trim().split(' ').filter(Boolean);
+    const initials = parts.length >= 2 ? parts[0][0] + parts[parts.length-1][0] : (parts[0]?.[0] || 'A');
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (avatarEl) avatarEl.textContent = initials.toUpperCase();
+  })();
 
   const sections = ['overview', 'patients', 'staff', 'consent', 'billing', 'reports'];
   let chartsReady = false;
@@ -509,7 +535,11 @@
       el.classList.toggle('text-white', el.dataset.section === name);
       el.classList.toggle('text-teal-200', el.dataset.section !== name);
     });
-
+    // Sync mobile nav
+    ['overview','patients','consent','billing','reports'].forEach(s => {
+      const btn = document.getElementById('an-' + s);
+      if (btn) btn.classList.toggle('active', s === name);
+    });
     const titles = { overview: 'Overview', patients: 'Patient Management', staff: 'Staff Management', consent: 'Consent Management', billing: 'Billing & Subscriptions', reports: 'Reports & Analytics' };
     document.getElementById('page-title').textContent = titles[name] || name;
 
@@ -572,7 +602,48 @@
 
   // Init charts for overview on load
   setTimeout(initCharts, 100);
+  function switchAdminNav(name) { showSection(name); }
+
   AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'admin_dashboard', details: { user_id: currentUser.id } });
+
+  // ── Sign-Out Confirmation ─────────────────────────────────
+  function openSignOutModal() {
+    const name = (typeof currentUser !== 'undefined' && currentUser?.name)
+      ? currentUser.name
+      : document.getElementById('sidebar-name')?.textContent || 'this account';
+    document.getElementById('signout-name').textContent = name;
+    document.getElementById('signout-modal').style.display = 'flex';
+  }
+  function closeSignOutModal() {
+    document.getElementById('signout-modal').style.display = 'none';
+  }
+  function confirmSignOut() {
+    closeSignOutModal();
+    Auth.signOut();
+  }
 </script>
+<!-- Sign-Out Confirmation Modal -->
+<div id="signout-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:20px">
+  <div style="background:white;border-radius:24px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center">
+    <div style="font-size:44px;margin-bottom:12px">🚪</div>
+    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:6px">Sign out of Family CareLink?</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6">
+      You are signed in as <strong id="signout-name" style="color:#374151">—</strong>.<br>
+      Signing out will end your session and clear your login from this device.<br>
+      Any unsaved changes will be lost.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="closeSignOutModal()"
+        style="padding:13px;border-radius:12px;border:1.5px solid #e5e7eb;background:white;color:#374151;font-size:14px;font-weight:600;cursor:pointer">
+        Cancel
+      </button>
+      <button onclick="confirmSignOut()"
+        style="padding:13px;border-radius:12px;border:none;background:#dc2626;color:white;font-size:14px;font-weight:700;cursor:pointer">
+        Yes, Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
