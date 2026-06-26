@@ -167,33 +167,40 @@
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Sign in as
           </label>
-          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3" id="role-buttons">
+          <div class="grid grid-cols-3 gap-2" id="role-buttons">
             <button type="button" data-role="ofw"
               class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-blue-400 hover:bg-blue-50 transition-all role-btn">
               <span class="text-xl">✈️</span>
-              <span>OFW Family</span>
+              <span class="text-center leading-tight">OFW<br>Family</span>
             </button>
             <button type="button" data-role="senior"
               class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-red-400 hover:bg-red-50 transition-all role-btn">
-              <span class="text-xl">👴</span>
-              <span>Senior</span>
+              <span class="text-xl">🏠</span>
+              <span class="text-center leading-tight">Local PH<br>Family</span>
             </button>
             <button type="button" data-role="expat"
               class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-purple-400 hover:bg-purple-50 transition-all role-btn">
               <span class="text-xl">🌍</span>
-              <span>Expat</span>
+              <span class="text-center leading-tight">Expat<br>Family</span>
             </button>
             <button type="button" data-role="nurse"
               class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-teal-400 hover:bg-teal-50 transition-all role-btn">
               <span class="text-xl">👩‍⚕️</span>
-              <span>Nurse / CA</span>
+              <span class="text-center leading-tight">Nurse /<br>CA</span>
             </button>
             <button type="button" data-role="admin"
-              class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all role-btn col-span-2 sm:col-span-1">
+              class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all role-btn">
               <span class="text-xl">🏥</span>
-              <span>Admin</span>
+              <span class="text-center leading-tight">Admin</span>
+            </button>
+            <button type="button" data-role="companion"
+              class="role-badge flex flex-col items-center gap-1 p-3 border-2 border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-orange-400 hover:bg-orange-50 transition-all role-btn">
+              <span class="text-xl">💊</span>
+              <span class="text-center leading-tight">Senior<br>Checker</span>
             </button>
           </div>
+          <!-- Role description hint -->
+          <p id="role-hint" class="mt-2 text-xs text-gray-400 text-center min-h-[16px]"></p>
           <input type="hidden" id="selected-role" value="" />
         </div>
 
@@ -252,9 +259,19 @@
           <span class="block font-medium text-blue-700">✈️ OFW Family</span>
           <span class="text-blue-500">ofw@test.com</span>
         </button>
+        <button type="button" onclick="fillCredentials('senior@test.com','test1234','senior')"
+          class="text-left p-2 rounded-lg bg-red-50 hover:bg-red-100 transition-colors border border-red-200">
+          <span class="block font-medium text-red-700">🏠 Local PH Family</span>
+          <span class="text-red-500">senior@test.com</span>
+        </button>
+        <button type="button" onclick="fillCredentials('expat@test.com','test1234','expat')"
+          class="text-left p-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors border border-purple-200">
+          <span class="block font-medium text-purple-700">🌍 Expat Family</span>
+          <span class="text-purple-500">expat@test.com</span>
+        </button>
         <button type="button" onclick="fillCredentials('nurse@test.com','test1234','nurse')"
           class="text-left p-2 rounded-lg bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200">
-          <span class="block font-medium text-teal-700">👩‍⚕️ Nurse</span>
+          <span class="block font-medium text-teal-700">👩‍⚕️ Nurse / CA</span>
           <span class="text-teal-500">nurse@test.com</span>
         </button>
         <button type="button" onclick="fillCredentials('admin@test.com','test1234','admin')"
@@ -262,17 +279,13 @@
           <span class="block font-medium text-emerald-700">🏥 Admin</span>
           <span class="text-emerald-500">admin@test.com</span>
         </button>
-        <button type="button" onclick="fillCredentials('senior@test.com','test1234','senior')"
-          class="text-left p-2 rounded-lg bg-red-50 hover:bg-red-100 transition-colors border border-red-200">
-          <span class="block font-medium text-red-700">👴 Senior</span>
-          <span class="text-red-500">senior@test.com</span>
-        </button>
-        <button type="button" onclick="fillCredentials('expat@test.com','test1234','expat')"
-          class="col-span-2 text-left p-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors border border-purple-200">
-          <span class="block font-medium text-purple-700">🌍 Expat</span>
-          <span class="text-purple-500">expat@test.com · Password: test1234</span>
+        <button type="button" onclick="fillCredentials('companion@test.com','1234','companion')"
+          class="text-left p-2 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors border border-orange-200">
+          <span class="block font-medium text-orange-700">💊 Senior Checker</span>
+          <span class="text-orange-500">companion@test.com · PIN: 1234</span>
         </button>
       </div>
+      <p class="text-xs text-gray-400 text-center mt-2">All passwords: <strong>test1234</strong> (Companion PIN: <strong>1234</strong>)</p>
     </div>
 
   </div><!-- /max-w-md -->
@@ -283,11 +296,21 @@
   <script>
     // ── Role Selection ─────────────────────────────────────────
     const roleColors = {
-      ofw: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700' },
-      senior: { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-700' },
-      expat: { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700' },
-      nurse: { border: 'border-teal-500', bg: 'bg-teal-50', text: 'text-teal-700' },
-      admin: { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+      ofw:       { border: 'border-blue-500',    bg: 'bg-blue-50',    text: 'text-blue-700' },
+      senior:    { border: 'border-red-500',     bg: 'bg-red-50',     text: 'text-red-700' },
+      expat:     { border: 'border-purple-500',  bg: 'bg-purple-50',  text: 'text-purple-700' },
+      nurse:     { border: 'border-teal-500',    bg: 'bg-teal-50',    text: 'text-teal-700' },
+      admin:     { border: 'border-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+      companion: { border: 'border-orange-500',  bg: 'bg-orange-50',  text: 'text-orange-700' },
+    };
+
+    const roleHints = {
+      ofw:       'Family working abroad (Middle East, Singapore, etc.)',
+      senior:    'Family living locally within the Philippines',
+      expat:     'Foreign national or retiree family in the Philippines',
+      nurse:     'Registered Nurse or Care Associate',
+      admin:     'Branch administrator — manage patients, staff, billing',
+      companion: 'For the elderly patient — simple medication & vitals checker',
     };
 
     let selectedRole = '';
@@ -297,17 +320,19 @@
         selectedRole = btn.dataset.role;
         document.getElementById('selected-role').value = selectedRole;
 
-        // Reset all
+        // Reset all buttons
         document.querySelectorAll('.role-btn').forEach(b => {
-          b.className = b.className.replace(/border-(blue|red|purple|teal|emerald)-500/g, 'border-gray-200');
-          b.className = b.className.replace(/bg-(blue|red|purple|teal|emerald)-50/g, '');
-          b.className = b.className.replace(/text-(blue|red|purple|teal|emerald)-700/g, 'text-gray-600');
+          b.classList.remove(...Object.values(roleColors).flatMap(c => [c.border, c.bg, c.text]));
+          b.classList.add('border-gray-200', 'text-gray-600');
         });
 
         // Highlight selected
         const colors = roleColors[selectedRole];
-        btn.classList.remove('border-gray-200');
+        btn.classList.remove('border-gray-200', 'text-gray-600');
         btn.classList.add(colors.border, colors.bg, colors.text);
+
+        // Show hint
+        document.getElementById('role-hint').textContent = roleHints[selectedRole] || '';
       });
     });
 
@@ -321,25 +346,20 @@
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const email = document.getElementById('email').value.trim();
+      const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const role = selectedRole;
+      const role     = selectedRole;
 
-      // Validate
       if (!email || !password || !role) {
         showError('Please fill in all fields and select a role.');
         shakeForm();
         return;
       }
 
-      // Show loading
       setLoading(true);
-
-      // Simulate async (replace with real Supabase call in prod)
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 600));
 
       const result = Auth.signIn(email, password, role);
-
       setLoading(false);
 
       if (!result.success) {
@@ -348,22 +368,18 @@
         return;
       }
 
-      // 2FA check (admin)
       if (result.user.twofa_required) {
-        // For prototype: skip 2FA, just redirect
-        // In prod: show 2FA modal
+        // Prototype: skip 2FA modal, just redirect
         console.log('[Auth] 2FA would be triggered here for admin');
       }
 
-      // Redirect
       Auth.redirectToDashboard(result.user.role);
     });
 
     // ── Helpers ────────────────────────────────────────────────
     function showError(msg) {
-      const el = document.getElementById('error-alert');
       document.getElementById('error-message').textContent = msg;
-      el.classList.remove('hidden');
+      document.getElementById('error-alert').classList.remove('hidden');
     }
 
     function hideError() {
@@ -387,14 +403,14 @@
       document.getElementById('email').value = email;
       document.getElementById('password').value = password;
       hideError();
-
-      // Click the right role button
       document.querySelectorAll('.role-btn').forEach(btn => {
         if (btn.dataset.role === role) btn.click();
       });
     }
 
-    // ── Check if already logged in ────────────────────────────
+    // ── Already logged in? ─────────────────────────────────────
+    // Only auto-redirect if session is genuinely active. Avoids infinite loops
+    // by checking we are NOT already on a dashboard page.
     const existingSession = Auth.getSession();
     if (existingSession) {
       Auth.redirectToDashboard(existingSession.user.role);

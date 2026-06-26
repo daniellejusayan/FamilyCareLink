@@ -540,21 +540,24 @@
 <!-- Mobile Bottom Nav -->
 <nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2">
   <div class="flex justify-around">
-    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-teal-700 py-1 px-3">
+    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-teal-700 py-1 px-2">
       <span class="text-lg">🏠</span> Home
     </button>
-    <button onclick="showSection('vitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+    <button onclick="showSection('vitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
       <span class="text-lg">📊</span> Vitals
     </button>
-    <button onclick="showSection('logs')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+    <button onclick="showSection('logs')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
       <span class="text-lg">📋</span> Logs
     </button>
-    <button onclick="showSection('messages')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3 relative">
+    <button onclick="showSection('messages')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 relative">
       <span class="text-lg">💬</span> Messages
       <span class="absolute top-0 right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center" style="font-size:9px">2</span>
     </button>
-    <button onclick="showSection('medications')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
+    <button onclick="showSection('medications')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2">
       <span class="text-lg">💊</span> Meds
+    </button>
+    <button onclick="Auth.signOut()" class="flex flex-col items-center gap-0.5 text-xs text-red-500 py-1 px-2">
+      <span class="text-lg">🚪</span> Sign Out
     </button>
   </div>
 </nav>

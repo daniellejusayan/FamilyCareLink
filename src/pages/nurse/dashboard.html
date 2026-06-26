@@ -33,8 +33,17 @@
     .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
     .break-glass-banner { background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #f59e0b; border-radius: 14px; }
     .offline-banner { background: #fee2e2; border: 1px solid #fca5a5; }
-    .task-row { border-bottom: 1px solid #f3f4f6; }
+    .task-row { border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 12px; padding: 12px 8px; border-radius: 8px; transition: background 0.15s; cursor: pointer; }
     .task-row:last-child { border-bottom: none; }
+    .task-row:hover { background: #f9fafb; }
+    .task-row.custom-task .remove-btn { opacity: 0; transition: opacity 0.15s; }
+    .task-row.custom-task:hover .remove-btn { opacity: 1; }
+    .tier-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .tier-bronze { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .tier-silver { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .tier-gold { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+    .add-task-row { border: 2px dashed #e5e7eb; border-radius: 10px; padding: 10px; display: flex; align-items: center; gap:2;  gap: 8px; cursor: pointer; color: #9ca3af; font-size: 13px; transition: all 0.15s; }
+    .add-task-row:hover { border-color: #0f766e; color: #0f766e; background: #f0fdfa; }
     .vital-input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .photo-preview { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #e5e7eb; }
     .visit-card { border-left: 4px solid #0f766e; }
@@ -202,7 +211,7 @@
             <span>📍 123 Magsaysay Ave, Baguio</span>
           </div>
           <div class="flex gap-2">
-            <button onclick="showSection('log-visit')" class="flex-1 btn-primary py-2 text-center text-sm">
+            <button onclick="currentPatientTier='silver'; showSection('log-visit')" class="flex-1 btn-primary py-2 text-center text-sm">
               📋 Log This Visit
             </button>
             <button onclick="showToast('Calling Rosa dela Cruz...', '📞')" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">
@@ -293,28 +302,28 @@
 
       <!-- Tasks Section -->
       <div class="card p-5 mb-4">
-        <h3 class="font-semibold text-gray-800 mb-4">✅ Tasks Checklist</h3>
-        <div class="space-y-0">
-          <label class="task-row flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2">
-            <input type="checkbox" id="task-meds" class="w-4 h-4 rounded" checked style="accent-color:#0f766e" />
-            <span class="text-sm text-gray-700">💊 Medications Given</span>
-          </label>
-          <label class="task-row flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2">
-            <input type="checkbox" id="task-hygiene" class="w-4 h-4 rounded" checked style="accent-color:#0f766e" />
-            <span class="text-sm text-gray-700">🚿 Hygiene Assistance</span>
-          </label>
-          <label class="task-row flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2">
-            <input type="checkbox" id="task-breakfast" class="w-4 h-4 rounded" style="accent-color:#0f766e" />
-            <span class="text-sm text-gray-700">🍳 Breakfast</span>
-          </label>
-          <label class="task-row flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2">
-            <input type="checkbox" id="task-exercise" class="w-4 h-4 rounded" style="accent-color:#0f766e" />
-            <span class="text-sm text-gray-700">🏃 Exercise / Walking</span>
-          </label>
-          <label class="task-row flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2">
-            <input type="checkbox" id="task-housekeeping" class="w-4 h-4 rounded" style="accent-color:#0f766e" />
-            <span class="text-sm text-gray-700">🧹 Light Housekeeping</span>
-          </label>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-gray-800">✅ Tasks Checklist</h3>
+          <div class="flex items-center gap-2">
+            <span id="checklist-tier-badge" class="tier-badge tier-silver">🥈 Silver</span>
+            <span id="checklist-progress" class="text-xs text-gray-400">0/5 done</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">Tasks are pre-loaded based on patient's care tier. You can check off completed tasks, add custom tasks, or remove any that don't apply.</p>
+        <div id="task-list" class="space-y-0 mb-3">
+          <!-- Populated by JS based on tier -->
+        </div>
+        <!-- Add Task Row -->
+        <div class="add-task-row" onclick="openAddTask()">
+          <span class="text-lg">＋</span>
+          <span>Add custom task...</span>
+        </div>
+        <!-- Inline add-task input (hidden by default) -->
+        <div id="add-task-form" class="hidden mt-2 flex gap-2">
+          <input type="text" id="new-task-input" placeholder="e.g. Wound dressing check"
+            class="input-field flex-1 text-sm" onkeydown="if(event.key==='Enter') saveNewTask()" />
+          <button onclick="saveNewTask()" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">Add</button>
+          <button onclick="cancelAddTask()" class="px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-sm hover:bg-gray-200">✕</button>
         </div>
       </div>
 
@@ -419,6 +428,7 @@
     });
     if (name === 'patients') renderPatients();
     if (name === 'audit') renderAuditLog();
+    if (name === 'log-visit') initChecklist(currentPatientTier);
     return false;
   }
 
@@ -449,6 +459,9 @@
           <div class="flex flex-wrap gap-1 mt-1">
             ${p.conditions.map(c => `<span class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">${c}</span>`).join('')}
           </div>
+          <button onclick="currentPatientTier='${p.tier}'; showSection('log-visit')" class="mt-3 w-full py-2 rounded-xl border border-teal-200 text-teal-700 text-xs font-semibold hover:bg-teal-50 transition-colors">
+            📋 Log Visit for ${p.name.split(' ')[0]}
+          </button>
         </div>
       `;
     }).join('');
@@ -496,13 +509,7 @@
         weight: document.getElementById('v-weight').value,
       },
       notes: document.getElementById('clinical-notes').value,
-      tasks: {
-        medications: document.getElementById('task-meds').checked,
-        hygiene: document.getElementById('task-hygiene').checked,
-        breakfast: document.getElementById('task-breakfast').checked,
-        exercise: document.getElementById('task-exercise').checked,
-        housekeeping: document.getElementById('task-housekeeping').checked,
-      },
+      tasks: collectTasks(),
     };
 
     AuditLog.write({
@@ -515,6 +522,142 @@
     showToast('Visit saved! Family has been notified. ✅', '💾');
     setTimeout(() => showSection('schedule'), 1500);
   }
+
+  // ── Tier-Based Task Checklist ──────────────────────────────
+  // Define tasks per tier — each higher tier INCLUDES lower tier tasks plus adds more
+  const TIER_TASKS = {
+    bronze: [
+      { id: 'meds',        label: '💊 Medications Given',        defaultChecked: false, tier: 'bronze' },
+      { id: 'vitals',      label: '📊 Vitals Recorded',          defaultChecked: false, tier: 'bronze' },
+      { id: 'hygiene',     label: '🚿 Hygiene Assistance',       defaultChecked: false, tier: 'bronze' },
+    ],
+    silver: [
+      { id: 'meds',        label: '💊 Medications Given',        defaultChecked: false, tier: 'bronze' },
+      { id: 'vitals',      label: '📊 Vitals Recorded',          defaultChecked: false, tier: 'bronze' },
+      { id: 'hygiene',     label: '🚿 Hygiene Assistance',       defaultChecked: false, tier: 'bronze' },
+      { id: 'breakfast',   label: '🍳 Meal Assistance',          defaultChecked: false, tier: 'silver' },
+      { id: 'exercise',    label: '🏃 Exercise / Walking',       defaultChecked: false, tier: 'silver' },
+      { id: 'housekeeping',label: '🧹 Light Housekeeping',       defaultChecked: false, tier: 'silver' },
+    ],
+    gold: [
+      { id: 'meds',        label: '💊 Medications Given',        defaultChecked: false, tier: 'bronze' },
+      { id: 'vitals',      label: '📊 Vitals Recorded',          defaultChecked: false, tier: 'bronze' },
+      { id: 'hygiene',     label: '🚿 Hygiene Assistance',       defaultChecked: false, tier: 'bronze' },
+      { id: 'breakfast',   label: '🍳 Meal Assistance',          defaultChecked: false, tier: 'silver' },
+      { id: 'exercise',    label: '🏃 Exercise / Walking',       defaultChecked: false, tier: 'silver' },
+      { id: 'housekeeping',label: '🧹 Light Housekeeping',       defaultChecked: false, tier: 'silver' },
+      { id: 'wound',       label: '🩹 Wound/Skin Assessment',    defaultChecked: false, tier: 'gold' },
+      { id: 'therapy',     label: '🧘 Therapy Exercises',        defaultChecked: false, tier: 'gold' },
+      { id: 'nutrition',   label: '🥗 Nutritional Check',        defaultChecked: false, tier: 'gold' },
+      { id: 'report',      label: '📝 Family Progress Report',   defaultChecked: false, tier: 'gold' },
+    ],
+  };
+
+  const TIER_BADGE = {
+    bronze: { cls: 'tier-bronze', label: '🥉 Bronze' },
+    silver: { cls: 'tier-silver', label: '🥈 Silver' },
+    gold:   { cls: 'tier-gold',   label: '🥇 Gold' },
+  };
+
+  const TIER_COLORS = { bronze: '#92400e', silver: '#475569', gold: '#b45309' };
+
+  // Current patient tier (in real app, comes from selected visit/patient)
+  let currentPatientTier = 'silver';
+  let customTasks = []; // { id, label, checked }
+
+  function initChecklist(tier = 'silver') {
+    currentPatientTier = tier;
+    customTasks = [];
+    // Reset presets to unchecked
+    TIER_TASKS[tier].forEach(t => t.defaultChecked = false);
+    renderChecklist();
+    // Update badge
+    const b = TIER_BADGE[tier];
+    const badge = document.getElementById('checklist-tier-badge');
+    badge.className = 'tier-badge ' + b.cls;
+    badge.textContent = b.label;
+  }
+
+  function renderChecklist() {
+    const container = document.getElementById('task-list');
+    const presets = TIER_TASKS[currentPatientTier] || TIER_TASKS.silver;
+    const allTasks = [...presets, ...customTasks];
+
+    container.innerHTML = allTasks.map((task, idx) => {
+      const isCustom = idx >= presets.length;
+      const tierDot = isCustom
+        ? '<span class="text-xs text-gray-400 bg-gray-100 rounded px-1.5 py-0.5 ml-auto mr-1 flex-shrink-0">custom</span>'
+        : task.tier !== currentPatientTier
+          ? `<span class="text-xs rounded px-1.5 py-0.5 ml-auto mr-1 flex-shrink-0" style="background:rgba(15,118,110,0.08);color:#0f766e">${TIER_BADGE[task.tier]?.label.split(' ')[0]}</span>`
+          : '';
+      const removeBtn = isCustom
+        ? `<button class="remove-btn flex-shrink-0 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 text-xs font-bold" onclick="removeCustomTask(${idx - presets.length})" title="Remove task">✕</button>`
+        : '';
+      return `
+        <label class="task-row ${isCustom ? 'custom-task' : ''}" onclick="updateProgress()">
+          <input type="checkbox" data-task-id="${task.id}" class="w-4 h-4 rounded flex-shrink-0"
+            ${task.defaultChecked ? 'checked' : ''} style="accent-color:#0f766e" onchange="updateProgress()" />
+          <span class="text-sm text-gray-700 flex-1">${task.label}</span>
+          ${tierDot}
+          ${removeBtn}
+        </label>`;
+    }).join('');
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const checkboxes = document.querySelectorAll('#task-list input[type="checkbox"]');
+    const total = checkboxes.length;
+    const done = [...checkboxes].filter(c => c.checked).length;
+    document.getElementById('checklist-progress').textContent = `${done}/${total} done`;
+    // Strike through completed
+    checkboxes.forEach(cb => {
+      const label = cb.closest('label');
+      const span = label?.querySelector('span.flex-1');
+      if (span) span.style.textDecoration = cb.checked ? 'line-through' : '';
+      if (span) span.style.color = cb.checked ? '#9ca3af' : '';
+    });
+  }
+
+  function removeCustomTask(customIdx) {
+    customTasks.splice(customIdx, 1);
+    renderChecklist();
+    showToast('Task removed', '🗑️');
+  }
+
+  function openAddTask() {
+    document.getElementById('add-task-form').classList.remove('hidden');
+    document.getElementById('new-task-input').focus();
+  }
+
+  function cancelAddTask() {
+    document.getElementById('add-task-form').classList.add('hidden');
+    document.getElementById('new-task-input').value = '';
+  }
+
+  function saveNewTask() {
+    const input = document.getElementById('new-task-input');
+    const label = input.value.trim();
+    if (!label) return;
+    customTasks.push({ id: 'custom_' + Date.now(), label: '📌 ' + label, defaultChecked: false });
+    input.value = '';
+    cancelAddTask();
+    renderChecklist();
+    showToast('Custom task added', '✅');
+  }
+
+  function collectTasks() {
+    const checkboxes = document.querySelectorAll('#task-list input[type="checkbox"]');
+    const result = {};
+    checkboxes.forEach(cb => {
+      result[cb.dataset.taskId] = cb.checked;
+    });
+    return result;
+  }
+
+  // Init checklist when log-visit section opens — detect patient tier from active visit card
+  const originalShowSection = window.showSection;
 
   // ── Break Glass ────────────────────────────────────────────
   function showBreakGlass() {
@@ -596,6 +739,8 @@
   }
 
   AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'nurse_dashboard', details: { user_id: currentUser.id } });
+  // Initialize task checklist with default tier
+  initChecklist('silver');
 </script>
 </body>
 </html>

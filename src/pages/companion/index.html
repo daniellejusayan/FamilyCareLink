@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Family CareLink — My Day</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /*
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     COMPANION APP — Daily Life Assistant
+     For elderly customers who want care on their own terms.
+     No family contact required. Fully autonomous.
+
+     Design rules (non-negotiable):
+       • Min font size: 22px body, 28px+ headings
+       • Min touch target height: 80px for all tappable rows
+       • Max 3 tabs. No nested navigation ever.
+       • Plain language only — no clinical jargon
+       • High contrast — no light gray on white
+       • Section dividers between nurse tasks and personal tasks
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    */
+
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8fafc;
+      font-size: 22px;
+      line-height: 1.5;
+      color: #1e293b;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    /* ── Top bar ─────────────────────────────────────── */
+    .top-bar {
+      background: #0f766e;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .top-bar-left { display: flex; flex-direction: column; }
+    .top-bar-title { color: white; font-weight: 800; font-size: 20px; line-height: 1.2; }
+    .top-bar-name  { color: #99f6e4; font-size: 15px; margin-top: 2px; }
+    .exit-btn {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .exit-btn:active { background: rgba(255,255,255,0.3); }
+
+    /* ── Tab bar ─────────────────────────────────────── */
+    .tab-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: white;
+      border-bottom: 3px solid #e2e8f0;
+      position: sticky;
+      top: 57px;
+      z-index: 40;
+    }
+    .tab-btn {
+      padding: 16px 8px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 4px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .tab-btn .tab-icon { font-size: 26px; }
+    .tab-btn.active { color: #0f766e; border-bottom-color: #0f766e; background: #f0fdfa; }
+
+    /* ── Cards ───────────────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 22px;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .card-pad { padding: 22px 24px; }
+
+    /* ── Section labels inside Today tab ────────────── */
+    .section-label {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 18px 24px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .label-nurse  { color: #0f766e; }
+    .label-meds   { color: #7c3aed; }
+    .label-mine   { color: #1d4ed8; }
+
+    /* ── Task rows ───────────────────────────────────── */
+    .task-row {
+      display: flex;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 2px solid #f1f5f9;
+      gap: 16px;
+      min-height: 80px;
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-user-select: none;
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-row:active { background: #f8fafc; }
+    .task-row.done { opacity: 0.65; }
+
+    .task-icon { font-size: 32px; flex-shrink: 0; width: 44px; text-align: center; }
+    .task-text { flex: 1; min-width: 0; }
+    .task-name  { font-size: 22px; font-weight: 700; color: #1e293b; }
+    .task-name.done-text { text-decoration: line-through; color: #94a3b8; }
+    .task-sub   { font-size: 16px; color: #64748b; margin-top: 2px; }
+    .task-check {
+      flex-shrink: 0;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 3px solid #cbd5e1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      transition: all 0.2s;
+      background: white;
+    }
+    .task-check.checked { background: #dcfce7; border-color: #16a34a; }
+
+    /* Nurse tasks: teal left border */
+    .nurse-task { border-left: 5px solid #14b8a6; }
+    /* Personal tasks: blue left border */
+    .personal-task { border-left: 5px solid #3b82f6; }
+    /* Med rows: purple left border */
+    .med-task { border-left: 5px solid #8b5cf6; }
+
+    /* ── Add personal task ───────────────────────────── */
+    .add-task-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 24px;
+      min-height: 80px;
+      width: 100%;
+      background: none;
+      border: none;
+      border-top: 2px dashed #e2e8f0;
+      cursor: pointer;
+      color: #3b82f6;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .add-task-btn:active { background: #eff6ff; }
+
+    .add-task-form {
+      padding: 16px 24px 20px;
+      background: #eff6ff;
+      border-top: 2px solid #bfdbfe;
+      display: none;
+    }
+    .add-task-form.open { display: block; }
+    .add-task-input {
+      width: 100%;
+      padding: 16px 18px;
+      font-size: 20px;
+      border: 2px solid #93c5fd;
+      border-radius: 14px;
+      background: white;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    .add-task-input:focus { outline: none; border-color: #3b82f6; }
+    .add-task-submit {
+      width: 100%;
+      padding: 18px;
+      font-size: 20px;
+      font-weight: 800;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .add-task-submit:active { background: #2563eb; }
+
+    /* ── Confirm all meds button ─────────────────────── */
+    .confirm-all-btn {
+      width: 100%;
+      padding: 24px;
+      font-size: 22px;
+      font-weight: 900;
+      color: white;
+      background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+      border: none;
+      border-radius: 0 0 22px 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+      transition: all 0.2s;
+    }
+    .confirm-all-btn:active { transform: scale(0.98); }
+    .confirm-all-btn.done-all {
+      background: linear-gradient(135deg, #15803d, #16a34a);
+      box-shadow: 0 4px 16px rgba(22,163,74,0.35);
+    }
+
+    /* ── Vital boxes ─────────────────────────────────── */
+    .vital-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 0 4px;
+    }
+    .vital-box {
+      border-radius: 20px;
+      padding: 22px 16px;
+      text-align: center;
+      border: 3px solid #bbf7d0;
+      background: #f0fdf4;
+    }
+    .vital-box.warn  { border-color: #fcd34d; background: #fffbeb; }
+    .vital-box.alert { border-color: #fca5a5; background: #fef2f2; }
+    .vital-emoji  { font-size: 40px; margin-bottom: 6px; }
+    .vital-val    { font-size: 32px; font-weight: 900; color: #1e293b; }
+    .vital-label  { font-size: 17px; color: #64748b; margin-top: 2px; }
+    .vital-status { font-size: 17px; font-weight: 700; margin-top: 6px; }
+    .vs-ok    { color: #15803d; }
+    .vs-warn  { color: #b45309; }
+    .vs-alert { color: #dc2626; }
+
+    /* ── Nurse note card ─────────────────────────────── */
+    .nurse-note {
+      border-left: 6px solid #0f766e;
+      background: #f0fdfa;
+      border-radius: 0 16px 16px 0;
+      padding: 18px 20px;
+      font-size: 20px;
+      color: #134e4a;
+      line-height: 1.6;
+    }
+
+    /* ── Help tab buttons ────────────────────────────── */
+    .help-btn {
+      width: 100%;
+      padding: 26px 24px;
+      font-size: 24px;
+      font-weight: 800;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      transition: all 0.15s;
+    }
+    .help-btn:active { transform: scale(0.98); }
+    .help-nurse { background: #f0fdfa; color: #0f766e; border: 3px solid #5eead4; }
+    .help-coord { background: #f5f3ff; color: #6d28d9; border: 3px solid #c4b5fd; }
+
+    /* ── Emergency ───────────────────────────────────── */
+    .emergency-btn {
+      width: 100%;
+      padding: 30px 24px;
+      font-size: 28px;
+      font-weight: 900;
+      color: white;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border: none;
+      border-radius: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      animation: epulse 2s infinite;
+      box-shadow: 0 8px 28px rgba(220,38,38,0.45);
+    }
+    @keyframes epulse {
+      0%,100% { box-shadow: 0 8px 28px rgba(220,38,38,0.45); }
+      50%      { box-shadow: 0 8px 44px rgba(220,38,38,0.75); }
+    }
+
+    /* ── Emergency modal ─────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 30px;
+      padding: 40px 28px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .modal-emoji { font-size: 64px; margin-bottom: 12px; }
+    .modal-title { font-size: 28px; font-weight: 900; color: #1e293b; margin-bottom: 10px; }
+    .modal-sub   { font-size: 20px; color: #64748b; margin-bottom: 28px; }
+    .modal-yes {
+      width: 100%; padding: 22px;
+      font-size: 24px; font-weight: 900;
+      background: #dc2626; color: white;
+      border: none; border-radius: 16px;
+      cursor: pointer; margin-bottom: 12px;
+    }
+    .modal-no {
+      width: 100%; padding: 20px;
+      font-size: 22px; font-weight: 700;
+      background: #f1f5f9; color: #374151;
+      border: none; border-radius: 16px; cursor: pointer;
+    }
+
+    /* ── Toast ───────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 112px;
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      opacity: 0;
+      z-index: 999;
+      transition: all 0.3s;
+      background: #1e293b;
+      color: white;
+      padding: 16px 26px;
+      border-radius: 18px;
+      font-size: 18px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      max-width: 90vw;
+      white-space: normal;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .tab-hidden { display: none; }
+
+    /* ── Progress bar ────────────────────────────────── */
+    .progress-bar { height: 10px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width 0.4s; }
+  </style>
+</head>
+<body>
+
+<!-- Emergency Modal -->
+<div id="emergency-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-emoji">🚨</div>
+    <div class="modal-title">Call for Help?</div>
+    <div class="modal-sub">This will alert Nurse Cathy and the care team right away.</div>
+    <button class="modal-yes" onclick="triggerEmergency()">🚨 Yes — Help Me Now!</button>
+    <button class="modal-no"  onclick="closeEmergency()">No, I'm Okay</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- ── Top Bar ─────────────────────────────────────────── -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-bar-title">🌿 My Day</div>
+    <div class="top-bar-name" id="patient-name">Loading...</div>
+  </div>
+  <button class="exit-btn" onclick="Auth.signOut()">🚪 Exit</button>
+</div>
+
+<!-- ── Tab Bar ─────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button id="tab-today"  class="tab-btn active" onclick="switchTab('today')">
+    <span class="tab-icon">📋</span> Today
+  </button>
+  <button id="tab-health" class="tab-btn" onclick="switchTab('health')">
+    <span class="tab-icon">❤️</span> My Health
+  </button>
+  <button id="tab-help"   class="tab-btn" onclick="switchTab('help')">
+    <span class="tab-icon">📞</span> Help
+  </button>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────── -->
+<main style="padding: 16px; max-width: 560px; margin: 0 auto;">
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!-- TAB: Today                                       -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="tab-content-today">
+
+    <!-- Greeting + date -->
+    <div class="card card-pad" style="margin-top:4px">
+      <div style="font-size:28px;font-weight:900;color:#1e293b" id="greeting-text">Good morning!</div>
+      <div style="font-size:17px;color:#64748b;margin-top:4px" id="greeting-date"></div>
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:16px;color:#64748b;margin-bottom:6px">
+          <span>Today's progress</span>
+          <span id="progress-label">0 of 0 done</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill bg-teal-500" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Nurse-assigned tasks ── -->
+    <div class="card" id="nurse-tasks-card">
+      <div class="section-label label-nurse">
+        👩‍⚕️ <span>From Nurse Cathy</span>
+      </div>
+      <div id="nurse-task-list">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- ── Medications ── -->
+    <div class="card" id="meds-card">
+      <div class="section-label label-meds">
+        💊 <span>My Medicines</span>
+        <span style="margin-left:auto;font-size:12px;font-weight:700;color:#7c3aed" id="meds-progress-label"></span>
+      </div>
+      <div id="med-list">
+        <!-- populated by JS -->
+      </div>
+      <button class="confirm-all-btn" id="confirm-all-btn" onclick="confirmAllMorningMeds()">
+        ✅ I Took All My Morning Medicines!
+      </button>
+    </div>
+
+    <!-- ── Personal tasks ── -->
+    <div class="card" id="personal-tasks-card">
+      <div class="section-label label-mine">
+        🗒️ <span>My Own To-Do's</span>
+      </div>
+      <div id="personal-task-list">
+        <!-- populated by JS -->
+      </div>
+      <!-- Add task -->
+      <button class="add-task-btn" onclick="openAddTask()">
+        <span style="font-size:28px">＋</span>
+        <span>Add something I need to do...</span>
+      </button>
+      <div class="add-task-form" id="add-task-form">
+        <input type="text" class="add-task-input" id="new-task-input"
+          placeholder="e.g. Buy bread, Water plants, Call friend..."
+          onkeydown="if(event.key==='Enter') submitNewTask()" />
+        <button class="add-task-submit" onclick="submitNewTask()">➕ Add to My List</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-today -->
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!-- TAB: My Health                                   -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="tab-content-health" class="tab-hidden">
+
+    <div class="card card-pad" style="margin-top:4px">
+      <div style="font-size:26px;font-weight:900;color:#1e293b">How you're doing today 💚</div>
+      <div style="font-size:17px;color:#64748b;margin-top:4px">Recorded by Nurse Cathy this morning</div>
+    </div>
+
+    <!-- Vitals grid — loaded from DB for this patient -->
+    <div class="vital-grid mb-4" id="vitals-grid">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Nurse's note for today -->
+    <div class="card card-pad" id="nurse-note-card" style="display:none">
+      <div style="font-size:16px;font-weight:800;color:#0f766e;margin-bottom:10px">📝 Note from Nurse Cathy</div>
+      <div class="nurse-note" id="nurse-note-text"></div>
+    </div>
+
+    <!-- Emergency on health tab too -->
+    <button class="emergency-btn" onclick="document.getElementById('emergency-modal').classList.add('open')">
+      🚨 EMERGENCY HELP
+    </button>
+
+  </div><!-- /tab-health -->
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!-- TAB: Help                                        -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="tab-content-help" class="tab-hidden">
+
+    <div class="card card-pad" style="margin-top:4px;margin-bottom:16px">
+      <div style="font-size:26px;font-weight:900;color:#1e293b">Who can I call? 📞</div>
+      <div style="font-size:18px;color:#64748b;margin-top:6px">Tap any button below to get help right away.</div>
+    </div>
+
+    <!-- Nurse -->
+    <button class="help-btn help-nurse" onclick="callNurse()">
+      <span style="font-size:36px">👩‍⚕️</span>
+      <div style="text-align:left">
+        <div>Call Nurse Cathy</div>
+        <div style="font-size:17px;font-weight:600;opacity:0.75">RN Cathy Ramirez · Available now</div>
+      </div>
+    </button>
+
+    <!-- Care coordinator -->
+    <button class="help-btn help-coord" onclick="callCoordinator()">
+      <span style="font-size:36px">👩‍💼</span>
+      <div style="text-align:left">
+        <div>Call Care Coordinator</div>
+        <div style="font-size:17px;font-weight:600;opacity:0.75">Maria Reyes · 8AM – 6PM</div>
+      </div>
+    </button>
+
+    <!-- Emergency -->
+    <button class="emergency-btn" onclick="document.getElementById('emergency-modal').classList.add('open')">
+      🚨 EMERGENCY HELP
+    </button>
+
+    <!-- Reassurance -->
+    <div style="text-align:center;padding:20px 10px;font-size:18px;color:#94a3b8;line-height:1.6">
+      This app is just for you. Your information stays private unless you choose to share it.
+    </div>
+
+  </div><!-- /tab-help -->
+
+</main>
+
+<script src="../../scripts/auth/auth.js"></script>
+<script src="../../scripts/shared/db.js"></script>
+<script>
+  'use strict';
+
+  // ── Auth ─────────────────────────────────────────────────
+  const currentUser = Auth.requireAuth('companion');
+  if (!currentUser) throw new Error('Redirecting...');
+
+  const patient = DB.getPatientById(currentUser.patient_id || 'pat_001');
+  document.getElementById('patient-name').textContent = patient?.name || currentUser.name || 'My Day';
+
+  // ── Greeting ─────────────────────────────────────────────
+  (function buildGreeting() {
+    const h = new Date().getHours();
+    const greet = h < 12 ? 'Good morning! 🌅' : h < 17 ? 'Good afternoon! ☀️' : 'Good evening! 🌙';
+    const firstName = (patient?.name || currentUser.name || '').split(' ')[0];
+    const dateStr = new Date().toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('greeting-text').textContent = greet + ' ' + firstName;
+    document.getElementById('greeting-date').textContent = dateStr;
+  })();
+
+  // ── Nurse-assigned tasks ──────────────────────────────────
+  // In production these come from today's visit record.
+  // For prototype: seeded from today's visit or fallback defaults.
+  const todayVisit = DB.getTodayVisit(currentUser.patient_id || 'pat_001')
+                  || DB.getVisitsByPatient(currentUser.patient_id || 'pat_001')[0]
+                  || null;
+
+  // Nurse tasks come from the visit task list
+  const nurseTasks = (todayVisit?.tasks || []).map(t => ({
+    id: 'nurse_' + t.id,
+    label: t.name,
+    icon: nurseTaskIcon(t.name),
+    done: t.done,
+    source: 'nurse',
+  }));
+
+  // Fallback if no visit yet today
+  if (!nurseTasks.length) {
+    nurseTasks.push(
+      { id: 'nurse_default_1', label: 'Take morning medicines',    icon: '💊', done: false, source: 'nurse' },
+      { id: 'nurse_default_2', label: 'Drink water after waking',  icon: '💧', done: false, source: 'nurse' },
+    );
+  }
+
+  function nurseTaskIcon(name) {
+    const n = name.toLowerCase();
+    if (n.includes('med') || n.includes('pill'))   return '💊';
+    if (n.includes('hygiene') || n.includes('bath')) return '🚿';
+    if (n.includes('meal') || n.includes('eat') || n.includes('breakfast') || n.includes('lunch')) return '🍱';
+    if (n.includes('walk') || n.includes('exercise') || n.includes('therapy')) return '🚶';
+    if (n.includes('knee') || n.includes('ice') || n.includes('pain')) return '🦵';
+    if (n.includes('clean') || n.includes('house') || n.includes('chore')) return '🧹';
+    if (n.includes('cholesterol') || n.includes('bp') || n.includes('vitals') || n.includes('monitor')) return '📊';
+    if (n.includes('call') || n.includes('phone')) return '📞';
+    if (n.includes('pharmacy') || n.includes('refill')) return '🏥';
+    if (n.includes('grocery') || n.includes('buy') || n.includes('shop')) return '🛒';
+    return '✅';
+  }
+
+  // ── Personal tasks ────────────────────────────────────────
+  // Persisted in localStorage for the session (resets to empty each new day in prod)
+  const PERSONAL_KEY = 'companion_personal_tasks_' + (currentUser.patient_id || 'pat_001');
+  let personalTasks = JSON.parse(localStorage.getItem(PERSONAL_KEY) || '[]');
+
+  // Save personal tasks
+  function savePersonalTasks() {
+    localStorage.setItem(PERSONAL_KEY, JSON.stringify(personalTasks));
+  }
+
+  // ── Medications ───────────────────────────────────────────
+  const allMeds = DB.getMedicationsByPatient(currentUser.patient_id || 'pat_001');
+  const MED_STATE_KEY = 'companion_med_state_' + (currentUser.patient_id || 'pat_001');
+  const medState = JSON.parse(localStorage.getItem(MED_STATE_KEY) || '{}');
+  allMeds.forEach(m => { if (medState[m.id] === undefined) medState[m.id] = m.status === 'given'; });
+
+  function saveMedState() { localStorage.setItem(MED_STATE_KEY, JSON.stringify(medState)); }
+
+  // ── Render: Nurse tasks ───────────────────────────────────
+  function renderNurseTasks() {
+    const el = document.getElementById('nurse-task-list');
+    if (!nurseTasks.length) {
+      el.innerHTML = '<div style="padding:20px 24px;font-size:18px;color:#94a3b8">No tasks assigned yet. Nurse Cathy will add them during the visit.</div>';
+      return;
+    }
+    el.innerHTML = nurseTasks.map(t => `
+      <div class="task-row nurse-task ${t.done ? 'done' : ''}" onclick="toggleNurseTask('${t.id}')">
+        <div class="task-icon">${t.icon}</div>
+        <div class="task-text">
+          <div class="task-name ${t.done ? 'done-text' : ''}">${t.label}</div>
+          <div class="task-sub">From Nurse Cathy</div>
+        </div>
+        <div class="task-check ${t.done ? 'checked' : ''}">${t.done ? '✓' : ''}</div>
+      </div>`).join('');
+    updateProgress();
+  }
+
+  function toggleNurseTask(id) {
+    const t = nurseTasks.find(x => x.id === id);
+    if (!t) return;
+    t.done = !t.done;
+    AuditLog.write({ action: t.done ? 'NURSE_TASK_DONE' : 'NURSE_TASK_UNDONE', resource: 'tasks', details: { label: t.label, patient_id: currentUser.patient_id } });
+    renderNurseTasks();
+    if (t.done) showToast('✅ ' + t.label + ' — done!');
+  }
+
+  // ── Render: Medications ───────────────────────────────────
+  function renderMeds() {
+    const el = document.getElementById('med-list');
+    const morningMeds   = allMeds.filter(m => m.time === 'Morning');
+    const otherMeds     = allMeds.filter(m => m.time !== 'Morning');
+    const takenCount    = allMeds.filter(m => medState[m.id]).length;
+    const morningPending = morningMeds.filter(m => !medState[m.id]).length;
+
+    document.getElementById('meds-progress-label').textContent = `${takenCount} of ${allMeds.length} taken`;
+
+    // Confirm-all button: only show if morning meds pending
+    const btn = document.getElementById('confirm-all-btn');
+    btn.style.display = morningPending > 0 ? 'flex' : 'none';
+    btn.textContent = `✅ I Took All ${morningPending} Morning Medicine${morningPending !== 1 ? 's' : ''}!`;
+
+    const renderMed = m => {
+      const taken = medState[m.id];
+      const timeIcon = m.time === 'Morning' ? '🌅' : m.time === 'Evening' ? '🌙' : '⏰';
+      return `
+        <div class="task-row med-task ${taken ? 'done' : ''}" onclick="toggleMed('${m.id}')">
+          <div class="task-icon">💊</div>
+          <div class="task-text">
+            <div class="task-name ${taken ? 'done-text' : ''}">${m.name}</div>
+            <div class="task-sub">${timeIcon} ${m.time} · ${m.for}</div>
+          </div>
+          <div class="task-check ${taken ? 'checked' : ''}">${taken ? '✓' : ''}</div>
+        </div>`;
+    };
+
+    el.innerHTML = [...morningMeds, ...otherMeds].map(renderMed).join('');
+    updateProgress();
+  }
+
+  function toggleMed(id) {
+    medState[id] = !medState[id];
+    saveMedState();
+    const med = allMeds.find(m => m.id === id);
+    AuditLog.write({ action: medState[id] ? 'MED_TAKEN_COMPANION' : 'MED_UNTAKEN_COMPANION', resource: 'medications', resource_id: id, details: { med_name: med?.name, patient_id: currentUser.patient_id } });
+    renderMeds();
+    if (medState[id]) showToast('✅ ' + (med?.name || 'Medicine') + ' — taken!');
+  }
+
+  function confirmAllMorningMeds() {
+    const morningMeds = allMeds.filter(m => m.time === 'Morning');
+    morningMeds.forEach(m => { medState[m.id] = true; });
+    saveMedState();
+    AuditLog.write({ action: 'ALL_MORNING_MEDS_TAKEN', resource: 'medications', details: { patient_id: currentUser.patient_id, count: morningMeds.length } });
+    const btn = document.getElementById('confirm-all-btn');
+    btn.textContent = '🎉 All morning medicines taken!';
+    btn.classList.add('done-all');
+    renderMeds();
+    showToast('🎉 Wonderful! Morning medicines all done!');
+  }
+
+  // ── Render: Personal tasks ────────────────────────────────
+  function renderPersonalTasks() {
+    const el = document.getElementById('personal-task-list');
+    if (!personalTasks.length) {
+      el.innerHTML = '<div style="padding:18px 24px;font-size:18px;color:#94a3b8">Nothing added yet. Tap below to add something.</div>';
+      updateProgress();
+      return;
+    }
+    el.innerHTML = personalTasks.map((t, i) => `
+      <div class="task-row personal-task ${t.done ? 'done' : ''}">
+        <div class="task-icon" onclick="togglePersonalTask(${i})" style="cursor:pointer">${t.icon || '📝'}</div>
+        <div class="task-text" onclick="togglePersonalTask(${i})" style="cursor:pointer">
+          <div class="task-name ${t.done ? 'done-text' : ''}">${t.label}</div>
+          <div class="task-sub">My list</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          <div class="task-check ${t.done ? 'checked' : ''}" onclick="togglePersonalTask(${i})" style="cursor:pointer">${t.done ? '✓' : ''}</div>
+          <button onclick="deletePersonalTask(${i})" style="width:40px;height:40px;border-radius:50%;border:2px solid #fca5a5;background:#fff;color:#ef4444;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+      </div>`).join('');
+    updateProgress();
+  }
+
+  function togglePersonalTask(i) {
+    personalTasks[i].done = !personalTasks[i].done;
+    savePersonalTasks();
+    AuditLog.write({ action: 'PERSONAL_TASK_TOGGLED', resource: 'personal_tasks', details: { label: personalTasks[i].label, done: personalTasks[i].done } });
+    renderPersonalTasks();
+    if (personalTasks[i].done) showToast('✅ ' + personalTasks[i].label + ' — done!');
+  }
+
+  function deletePersonalTask(i) {
+    const label = personalTasks[i].label;
+    personalTasks.splice(i, 1);
+    savePersonalTasks();
+    AuditLog.write({ action: 'PERSONAL_TASK_DELETED', resource: 'personal_tasks', details: { label } });
+    renderPersonalTasks();
+  }
+
+  function openAddTask() {
+    const form = document.getElementById('add-task-form');
+    form.classList.toggle('open');
+    if (form.classList.contains('open')) document.getElementById('new-task-input').focus();
+  }
+
+  function submitNewTask() {
+    const input = document.getElementById('new-task-input');
+    const label = input.value.trim();
+    if (!label) return;
+    const icon = nurseTaskIcon(label); // reuse icon logic
+    personalTasks.push({ id: 'p_' + Date.now(), label, icon, done: false });
+    savePersonalTasks();
+    AuditLog.write({ action: 'PERSONAL_TASK_ADDED', resource: 'personal_tasks', details: { label, patient_id: currentUser.patient_id } });
+    input.value = '';
+    document.getElementById('add-task-form').classList.remove('open');
+    renderPersonalTasks();
+    showToast('📝 Added: ' + label);
+  }
+
+  // ── Progress bar (all tasks + meds combined) ──────────────
+  function updateProgress() {
+    const nurseTotal    = nurseTasks.length;
+    const nurseDone     = nurseTasks.filter(t => t.done).length;
+    const medTotal      = allMeds.length;
+    const medDone       = allMeds.filter(m => medState[m.id]).length;
+    const personalTotal = personalTasks.length;
+    const personalDone  = personalTasks.filter(t => t.done).length;
+
+    const total = nurseTotal + medTotal + personalTotal;
+    const done  = nurseDone + medDone + personalDone;
+    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `${done} of ${total} done`;
+  }
+
+  // ── Health tab: vitals ────────────────────────────────────
+  function renderVitals() {
+    const v = todayVisit?.vitals;
+    const el = document.getElementById('vitals-grid');
+    if (!v) {
+      el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;font-size:20px;color:#94a3b8">No vitals recorded today yet. Nurse Cathy will record them during the visit.</div>';
+      return;
+    }
+
+    const boxes = [];
+    // BP
+    const bpHigh = v.bp_systolic >= 140 || v.bp_diastolic >= 90;
+    const bpWarn = v.bp_systolic >= 130 || v.bp_diastolic >= 80;
+    boxes.push({
+      emoji: '❤️', val: `${v.bp_systolic}/${v.bp_diastolic}`,
+      label: 'Blood Pressure',
+      cls: bpHigh ? 'alert' : bpWarn ? 'warn' : '',
+      status: bpHigh ? '⚠ High' : bpWarn ? '⚠ A bit high' : '✓ Good',
+      statusCls: bpHigh ? 'vs-alert' : bpWarn ? 'vs-warn' : 'vs-ok',
+    });
+    // HR
+    boxes.push({
+      emoji: '💓', val: v.heart_rate + ' bpm',
+      label: 'Heart Rate',
+      cls: '', status: '✓ Normal', statusCls: 'vs-ok',
+    });
+    // Temp
+    boxes.push({
+      emoji: '🌡️', val: v.temperature + '°C',
+      label: 'Temperature',
+      cls: '', status: '✓ Normal', statusCls: 'vs-ok',
+    });
+    // Blood sugar (if present)
+    if (v.blood_sugar != null) {
+      const sugarHigh = v.blood_sugar >= 180;
+      const sugarWarn = v.blood_sugar >= 140;
+      boxes.push({
+        emoji: '🩸', val: v.blood_sugar + ' mg/dL',
+        label: 'Blood Sugar',
+        cls: sugarHigh ? 'alert' : sugarWarn ? 'warn' : '',
+        status: sugarHigh ? '⚠ High' : sugarWarn ? '⚠ A bit high' : '✓ Good',
+        statusCls: sugarHigh ? 'vs-alert' : sugarWarn ? 'vs-warn' : 'vs-ok',
+      });
+    }
+    // Cholesterol (if present)
+    if (v.cholesterol_total != null) {
+      const cholHigh = v.cholesterol_total >= 240;
+      const cholWarn = v.cholesterol_total >= 200;
+      boxes.push({
+        emoji: '🫀', val: v.cholesterol_total + ' mg/dL',
+        label: 'Cholesterol',
+        cls: cholHigh ? 'alert' : cholWarn ? 'warn' : '',
+        status: cholHigh ? '⚠ High' : cholWarn ? '⚠ Watch' : '✓ Good',
+        statusCls: cholHigh ? 'vs-alert' : cholWarn ? 'vs-warn' : 'vs-ok',
+      });
+    }
+    // SpO2
+    if (v.spo2 != null) {
+      boxes.push({
+        emoji: '🫁', val: v.spo2 + '%',
+        label: 'Oxygen Level',
+        cls: v.spo2 < 94 ? 'alert' : '',
+        status: v.spo2 < 94 ? '⚠ Low' : '✓ Good',
+        statusCls: v.spo2 < 94 ? 'vs-alert' : 'vs-ok',
+      });
+    }
+
+    el.innerHTML = boxes.map(b => `
+      <div class="vital-box ${b.cls}">
+        <div class="vital-emoji">${b.emoji}</div>
+        <div class="vital-val">${b.val}</div>
+        <div class="vital-label">${b.label}</div>
+        <div class="vital-status ${b.statusCls}">${b.status}</div>
+      </div>`).join('');
+
+    // Nurse note
+    if (todayVisit?.notes) {
+      document.getElementById('nurse-note-card').style.display = 'block';
+      document.getElementById('nurse-note-text').textContent = todayVisit.notes;
+    }
+  }
+
+  // ── Help tab actions ──────────────────────────────────────
+  function callNurse() {
+    AuditLog.write({ action: 'CALL_NURSE', resource: 'companion', details: { patient_id: currentUser.patient_id } });
+    showToast('📞 Calling Nurse Cathy...');
+  }
+  function callCoordinator() {
+    AuditLog.write({ action: 'CALL_COORDINATOR', resource: 'companion', details: { patient_id: currentUser.patient_id } });
+    showToast('📞 Calling Care Coordinator Maria...');
+  }
+
+  // ── Emergency ─────────────────────────────────────────────
+  function triggerEmergency() {
+    closeEmergency();
+    AuditLog.write({ action: 'COMPANION_EMERGENCY', resource: 'emergency_alerts', details: { patient_id: currentUser.patient_id } });
+    showToast('🚨 Help is on the way! Nurse Cathy has been alerted.');
+  }
+  function closeEmergency() {
+    document.getElementById('emergency-modal').classList.remove('open');
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────
+  function switchTab(tab) {
+    ['today','health','help'].forEach(t => {
+      document.getElementById('tab-content-' + t).classList.toggle('tab-hidden', t !== tab);
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+    AuditLog.write({ action: 'COMPANION_TAB', resource: 'companion', details: { tab } });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Toast ─────────────────────────────────────────────────
+  let _toastTimer;
+  function showToast(msg) {
+    clearTimeout(_toastTimer);
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+  }
+
+  // ── Init ──────────────────────────────────────────────────
+  renderNurseTasks();
+  renderMeds();
+  renderPersonalTasks();
+  renderVitals();
+  AuditLog.write({ action: 'COMPANION_LOADED', resource: 'companion', details: { patient_id: currentUser.patient_id } });
+</script>
+</body>
+</html>

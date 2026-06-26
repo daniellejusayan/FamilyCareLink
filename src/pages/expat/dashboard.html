@@ -3,261 +3,739 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Family CareLink — Expat Dashboard</title>
+  <title>Family CareLink — Expat Gold Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles/variables.css" />
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; background: #f5f3ff; }
+    /* ── Sidebar ─────────────────────────── */
     .sidebar { width: 260px; min-height: 100vh; background: #5b21b6; }
     .nav-item { transition: all 0.15s; border-radius: 10px; }
     .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); }
-    .card { background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    /* ── Cards ───────────────────────────── */
+    .card { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    /* ── Expat "Plus" layer pill ─────────── */
+    /* Wraps expat-specific assistance content on top of core features */
+    .expat-assist {
+      border-left: 4px solid #8b5cf6;
+      background: linear-gradient(135deg, #faf5ff, #f5f3ff);
+      border-radius: 0 14px 14px 0;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+    .expat-assist-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #7c3aed;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    /* ── Tooltips ────────────────────────── */
+    .tooltip-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+    .tooltip-icon {
+      width: 16px; height: 16px; border-radius: 50%; background: #ede9fe; color: #7c3aed;
+      font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center;
+      cursor: help; flex-shrink: 0;
+    }
+    .tooltip-box {
+      display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+      background: #1e1b4b; color: white; font-size: 11px; padding: 8px 12px; border-radius: 10px;
+      width: 220px; z-index: 200; line-height: 1.5; pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .tooltip-wrap:hover .tooltip-box { display: block; }
+    /* ── Currency / unit context strip ──── */
+    .unit-strip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #ede9fe; border-radius: 99px;
+      padding: 3px 10px; font-size: 11px; font-weight: 600; color: #6d28d9;
+    }
+    /* ── Gold tier badge ─────────────────── */
+    .gold-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1.5px solid #f59e0b;
+      border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 800; color: #92400e;
+    }
+    /* ── Vital card ──────────────────────── */
+    .vital-card { border-radius: 14px; padding: 16px; border: 2px solid #e5e7eb; text-align: center; }
+    .vital-normal { background: #f0fdf4; border-color: #bbf7d0; }
+    .vital-warn { background: #fffbeb; border-color: #fcd34d; }
+    /* ── Chat ────────────────────────────── */
+    .chat-nurse { background: #f3f4f6; border-radius: 16px 16px 16px 4px; }
+    .chat-me { background: linear-gradient(135deg, #5b21b6, #8b5cf6); color: white; border-radius: 16px 16px 4px 16px; }
+    /* ── Inputs ──────────────────────────── */
+    .input-field { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; font-size: 14px; width: 100%; transition: border-color 0.2s; background: #fafafa; }
+    .input-field:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.1); background: white; }
+    /* ── Buttons ─────────────────────────── */
+    .btn-primary { background: linear-gradient(135deg, #5b21b6, #8b5cf6); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-signout { background: #3b0764; color: #d8b4fe; border-radius: 10px; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; border: 1.5px solid rgba(216,180,254,0.3); }
+    .btn-signout:hover { background: #4c1d95; color: white; }
+    /* ── Lang buttons ────────────────────── */
+    .lang-btn { border: 1.5px solid rgba(216,180,254,0.4); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; color: #c4b5fd; transition: all 0.15s; cursor: pointer; }
+    .lang-btn.active, .lang-btn:hover { background: rgba(255,255,255,0.15); color: white; border-color: rgba(255,255,255,0.5); }
+    .lang-btn-top { border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 4px 8px; font-size: 11px; font-weight: 600; color: #6b7280; transition: all 0.15s; cursor: pointer; }
+    .lang-btn-top.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+    /* ── Hospital card ───────────────────── */
+    .hospital-card { border: 1.5px solid #e5e7eb; border-radius: 14px; transition: all 0.2s; }
+    .hospital-card:hover { border-color: #8b5cf6; box-shadow: 0 4px 16px rgba(139,92,246,0.12); }
+    /* ── Misc ────────────────────────────── */
     .audit-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .input-field { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; font-size: 14px; width: 100%; transition: border-color 0.2s; }
-    .input-field:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
-    .lang-btn { border: 2px solid #e5e7eb; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 500; transition: all 0.15s; }
-    .lang-btn.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
-    .lang-btn:hover { border-color: #8b5cf6; }
-    .hospital-card { border: 1.5px solid #e5e7eb; border-radius: 14px; transition: all 0.2s; }
-    .hospital-card:hover { border-color: #8b5cf6; box-shadow: 0 4px 12px rgba(139,92,246,0.12); }
     .tag { border-radius: 9999px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
-    .toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; }
+    .task-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .task-done { background: #dcfce7; color: #166534; }
+    .task-miss { background: #fee2e2; color: #991b1b; }
+    .toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
     .toast.show { transform: translateY(0); opacity: 1; }
-    @media (max-width: 768px) { .sidebar { display: none; } .mobile-nav { display: flex; } }
-    @media (min-width: 769px) { .mobile-nav { display: none; } }
+    .section-hidden { display: none; }
+    @media (max-width: 768px) { .sidebar { display: none; } .mobile-nav { display: flex !important; } }
+    @media (min-width: 769px) { .mobile-nav { display: none !important; } }
   </style>
 </head>
 <body>
 
+<!-- Toast -->
 <div id="toast" class="toast">
   <div class="bg-gray-800 text-white px-4 py-3 rounded-xl text-sm shadow-lg flex items-center gap-2">
-    <span id="toast-icon">✅</span><span id="toast-msg">Done</span>
+    <span id="toast-icon">✅</span><span id="toast-msg"></span>
+  </div>
+</div>
+
+<!-- Emergency Modal -->
+<div id="emergency-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60 p-4">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+    <div class="text-5xl mb-3">🚨</div>
+    <h3 class="font-bold text-gray-800 text-lg mb-2">Emergency Response</h3>
+    <p class="text-sm text-gray-500 mb-5">This will alert Nurse Cathy, call 117 (ambulance), and notify your country's embassy emergency line.</p>
+    <div class="flex gap-2">
+      <button onclick="triggerEmergency()" class="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-sm">🚨 Dispatch Now</button>
+      <button onclick="closeModal('emergency-modal')" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium text-sm">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vitals Reveal Modal -->
+<div id="vitals-reveal-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60 p-4">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+    <div class="text-3xl mb-2">🔒</div>
+    <h3 class="font-bold text-gray-800 mb-1">View Full Vitals</h3>
+    <p class="text-xs text-gray-500 mb-4">This access will be logged in the immutable audit trail as required by your GOLD tier data access agreement.</p>
+    <div class="flex gap-2">
+      <button onclick="revealVitals()" class="flex-1 btn-primary text-center text-sm">View Vitals</button>
+      <button onclick="closeModal('vitals-reveal-modal')" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium text-sm">Cancel</button>
+    </div>
   </div>
 </div>
 
 <div class="flex min-h-screen">
 
-  <!-- Sidebar -->
-  <aside class="sidebar hidden md:flex flex-col">
+  <!-- ═════════════════════════ SIDEBAR ═════════════════════════ -->
+  <aside class="sidebar hidden md:flex flex-col flex-shrink-0">
+    <!-- Brand -->
     <div class="p-6 border-b border-purple-700">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm">🌏</div>
+        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow">🌏</div>
         <div>
-          <div class="text-white font-semibold text-sm">Family CareLink</div>
-          <div class="text-purple-300 text-xs">Expat Branch</div>
+          <div class="text-white font-bold text-sm">Family CareLink</div>
+          <div class="text-purple-300 text-xs">Expat Gold Branch</div>
         </div>
       </div>
-      <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background:rgba(139,92,246,0.2);color:#c4b5fd">
-        <span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span>
-        Baguio City, Philippines
+      <div class="mt-3 flex items-center gap-2 flex-wrap">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background:rgba(139,92,246,0.25);color:#c4b5fd">
+          <span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span>
+          Baguio City, PH
+        </div>
+        <span class="gold-badge">🥇 Gold</span>
       </div>
     </div>
+    <!-- User -->
     <div class="p-4 border-b border-purple-700">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold">JM</div>
+        <div class="w-9 h-9 rounded-full bg-purple-500 flex items-center justify-center text-white text-sm font-bold">JM</div>
         <div>
-          <div class="text-white text-sm font-medium" id="sidebar-name">James Miller</div>
-          <div class="text-purple-300 text-xs">Expat Member · 🇺🇸 English</div>
+          <div class="text-white text-sm font-semibold" id="sidebar-name">James Miller</div>
+          <div class="text-purple-300 text-xs">Gold Member · <span id="sidebar-flag">🇺🇸</span> <span id="sidebar-lang">EN</span></div>
         </div>
       </div>
     </div>
-    <!-- Language Selector Sidebar -->
+    <!-- Language selector -->
     <div class="px-4 py-3 border-b border-purple-700">
-      <div class="text-xs text-purple-300 mb-2 font-medium">Language / Wika</div>
-      <div class="flex flex-wrap gap-1.5" id="lang-btns-sidebar">
-        <button onclick="setLanguage('en')" class="lang-btn text-white border-purple-400 active" data-lang="en">🇺🇸 EN</button>
-        <button onclick="setLanguage('es')" class="lang-btn text-purple-200 border-purple-600" data-lang="es">🇪🇸 ES</button>
-        <button onclick="setLanguage('ko')" class="lang-btn text-purple-200 border-purple-600" data-lang="ko">🇰🇷 KO</button>
-        <button onclick="setLanguage('ja')" class="lang-btn text-purple-200 border-purple-600" data-lang="ja">🇯🇵 JA</button>
+      <div class="text-xs text-purple-300 mb-2 font-semibold">🌐 Language</div>
+      <div class="flex flex-wrap gap-1.5">
+        <button onclick="setLanguage('en')" class="lang-btn active" data-lang="en">🇺🇸 EN</button>
+        <button onclick="setLanguage('es')" class="lang-btn" data-lang="es">🇪🇸 ES</button>
+        <button onclick="setLanguage('ko')" class="lang-btn" data-lang="ko">🇰🇷 KO</button>
+        <button onclick="setLanguage('ja')" class="lang-btn" data-lang="ja">🇯🇵 JA</button>
       </div>
     </div>
-    <nav class="flex-1 p-4 space-y-1">
+    <!-- Nav -->
+    <nav class="flex-1 p-4 space-y-0.5 overflow-y-auto">
+      <!-- CORE sections (same as OFW/Local PH) -->
+      <div class="text-xs text-purple-400 px-3 py-1.5 font-bold uppercase tracking-wider">Core Features</div>
       <a href="#" onclick="showSection('overview')" data-section="overview" class="nav-item active flex items-center gap-3 px-3 py-2.5 text-white text-sm">
         <span>🏠</span> <span data-i18n="nav_overview">Overview</span>
       </a>
+      <a href="#" onclick="showSection('vitals')" data-section="vitals" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>❤️</span> Vitals & Health
+      </a>
+      <a href="#" onclick="showSection('care-logs')" data-section="care-logs" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>📋</span> Care Logs
+      </a>
+      <a href="#" onclick="showSection('medications')" data-section="medications" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>💊</span> Medications
+      </a>
+      <a href="#" onclick="showSection('messages')" data-section="messages" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>💬</span> Messages
+        <span id="unread-badge" class="ml-auto hidden text-xs bg-white text-purple-700 rounded-full px-1.5 py-0.5 font-bold">1</span>
+      </a>
+      <a href="#" onclick="showSection('billing')" data-section="billing" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>💳</span> Billing
+      </a>
+      <a href="#" onclick="showSection('audit')" data-section="audit" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>📜</span> Audit Log
+      </a>
+      <!-- EXPAT PLUS sections -->
+      <div class="text-xs text-purple-400 px-3 pt-3 pb-1.5 font-bold uppercase tracking-wider">Expat Assistance</div>
       <a href="#" onclick="showSection('hospitals')" data-section="hospitals" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
-        <span>🏥</span> <span data-i18n="nav_hospitals">Hospital Directory</span>
+        <span>🏥</span> Hospital Navigator
       </a>
       <a href="#" onclick="showSection('coordination')" data-section="coordination" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
-        <span>🤝</span> <span data-i18n="nav_coordination">Care Coordination</span>
+        <span>🤝</span> Care Coordination
+      </a>
+      <a href="#" onclick="showSection('insurance')" data-section="insurance" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
+        <span>🛡️</span> Insurance Claims
       </a>
       <a href="#" onclick="showSection('privacy')" data-section="privacy" class="nav-item flex items-center gap-3 px-3 py-2.5 text-purple-200 text-sm">
-        <span>🔒</span> <span data-i18n="nav_privacy">Privacy & Consent</span>
+        <span>🔒</span> Privacy & Consent
       </a>
     </nav>
-    <div class="p-4 border-t border-purple-700">
-      <div class="flex items-center gap-2 text-xs text-purple-300 mb-2">
-        <div class="audit-dot"></div><span>Audit logging active</span>
+    <!-- Footer -->
+    <div class="p-4 border-t border-purple-700 space-y-2">
+      <div class="flex items-center gap-2 text-xs text-purple-300 mb-1">
+        <div class="audit-dot"></div><span>Audit logging active · GOLD tier</span>
       </div>
-      <button onclick="Auth.signOut()" class="w-full py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-medium transition-colors">
-        Sign Out
+      <button onclick="Auth.signOut()" class="btn-signout w-full">
+        🚪 Sign Out
       </button>
     </div>
   </aside>
 
-  <!-- Main -->
-  <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6">
+  <!-- ═════════════════════════ MAIN ═════════════════════════ -->
+  <main class="flex-1 p-4 md:p-6 pb-28 md:pb-6 overflow-x-hidden">
 
-    <!-- Top Bar -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800" id="page-title" data-i18n="page_overview">Overview</h1>
-        <p class="text-gray-500 text-sm">Baguio City, Philippines · June 25, 2026</p>
+    <!-- Top bar -->
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <!-- Back button: sub-pages only -->
+        <button id="back-btn" onclick="showSection('overview')"
+          class="hidden items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 text-sm font-semibold hover:bg-purple-100 transition-colors">
+          ← <span data-i18n="btn_back">Back</span>
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-gray-800" id="page-title" data-i18n="page_overview">Overview</h1>
+          <p class="text-gray-400 text-xs" id="page-subtitle">Baguio City, Philippines · Gold Tier</p>
+        </div>
       </div>
-      <!-- Mobile lang toggle -->
-      <div class="flex gap-1 md:hidden">
-        <button onclick="setLanguage('en')" class="lang-btn text-xs active" data-lang="en">EN</button>
-        <button onclick="setLanguage('es')" class="lang-btn text-xs" data-lang="es">ES</button>
-        <button onclick="setLanguage('ko')" class="lang-btn text-xs" data-lang="ko">KO</button>
-        <button onclick="setLanguage('ja')" class="lang-btn text-xs" data-lang="ja">JA</button>
+      <div class="flex items-center gap-2">
+        <!-- Mobile lang -->
+        <div class="flex gap-1 md:hidden">
+          <button onclick="setLanguage('en')" class="lang-btn-top active" data-lang-top="en">EN</button>
+          <button onclick="setLanguage('es')" class="lang-btn-top" data-lang-top="es">ES</button>
+          <button onclick="setLanguage('ko')" class="lang-btn-top" data-lang-top="ko">KO</button>
+          <button onclick="setLanguage('ja')" class="lang-btn-top" data-lang-top="ja">JA</button>
+        </div>
+        <!-- Emergency - desktop -->
+        <button onclick="openModal('emergency-modal')" class="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700">
+          🚨 Emergency
+        </button>
+        <!-- Mobile: SOS + signout -->
+        <button onclick="openModal('emergency-modal')" class="md:hidden px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-bold">🚨</button>
+        <button onclick="Auth.signOut()" class="md:hidden px-3 py-2 rounded-xl bg-purple-100 text-purple-700 text-xs font-bold border border-purple-200">🚪</button>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SECTION: Overview -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Overview                  -->
+    <!-- ═══════════════════════════════════ -->
     <div id="section-overview">
 
-      <!-- Welcome Card -->
-      <div class="card p-5 mb-4" style="border-left: 5px solid #8b5cf6">
-        <div class="flex items-center gap-3 mb-3">
+      <!-- Gold tier + welcome -->
+      <div class="card p-5 mb-4" style="border-left:5px solid #8b5cf6">
+        <div class="flex items-start gap-3">
           <span class="text-3xl">🌍</span>
-          <div>
-            <div class="font-bold text-gray-800" data-i18n="welcome_title">Welcome, James!</div>
-            <div class="text-sm text-gray-500" data-i18n="welcome_sub">Your dedicated care coordinator is ready to assist.</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="font-bold text-gray-800" data-i18n="welcome_title">Welcome, James!</div>
+              <span class="gold-badge">🥇 Gold Tier</span>
+            </div>
+            <div class="text-sm text-gray-500 mt-0.5" data-i18n="welcome_sub">Your dedicated care coordinator is ready to assist.</div>
+            <div class="mt-2 flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+              <div class="w-9 h-9 rounded-xl bg-purple-200 flex items-center justify-center text-lg">👩‍💼</div>
+              <div>
+                <div class="font-semibold text-gray-800 text-sm" data-i18n="coordinator_name">Maria Reyes — Care Coordinator</div>
+                <div class="text-xs text-gray-500" data-i18n="coordinator_available">Available 8:00 AM – 6:00 PM</div>
+              </div>
+              <button onclick="showToast('Contacting Maria Reyes...','📞')" class="ml-auto px-3 py-1.5 rounded-lg text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200">
+                <span data-i18n="btn_contact">Contact</span>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-          <div class="w-10 h-10 rounded-xl bg-purple-200 flex items-center justify-center text-lg">👩‍💼</div>
-          <div>
-            <div class="font-semibold text-gray-800 text-sm" data-i18n="coordinator_name">Maria Reyes — Care Coordinator</div>
-            <div class="text-xs text-gray-500" data-i18n="coordinator_available">Available 8:00 AM – 6:00 PM</div>
-          </div>
-          <button onclick="showToast('Contacting Maria Reyes, Care Coordinator...', '📞')"
-            class="ml-auto px-3 py-1.5 rounded-lg text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200">
-            <span data-i18n="btn_contact">Contact</span>
+      </div>
+
+      <!-- Status banner -->
+      <div class="mb-4 p-4 rounded-2xl flex items-center gap-4" style="background:#dcfce7;border-left:6px solid #16a34a">
+        <span class="text-3xl">😊</span>
+        <div>
+          <div class="font-bold text-green-800">James's Nurse on Wheels is on the way!</div>
+          <div class="text-green-700 text-sm mt-0.5">Nurse Cathy arrives at 9:00 AM · <span class="font-semibold">James's home · Baguio City</span></div>
+          <div class="text-green-600 text-xs mt-1">📋 Monitored by you · Last update 11:30 AM</div>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="card p-4 text-center">
+          <div class="text-2xl font-bold" style="color:#5b21b6">18</div>
+          <div class="text-xs text-gray-500">Visits Left</div>
+          <div class="text-xs text-gray-400 mt-0.5">Gold · 30/mo</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-2xl font-bold text-amber-600">129/83</div>
+          <div class="text-xs text-gray-500">Your Latest BP</div>
+          <div class="text-xs text-amber-500 font-semibold">⚠ Stage 1 — Monitor</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-2xl font-bold text-gray-800">2/4</div>
+          <div class="text-xs text-gray-500">James's Meds Today</div>
+          <div class="text-xs text-amber-500">2 scheduled later</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-2xl font-bold text-blue-600">$95</div>
+          <div class="text-xs text-gray-500">Next Payment</div>
+          <div class="text-xs text-gray-400">≈ ₱5,500 · July 1</div>
+        </div>
+      </div>
+
+      <!-- Core feature shortcuts (same 8 as OFW/Local PH) -->
+      <div class="card p-5 mb-4">
+        <h3 class="font-bold text-gray-800 mb-3">⚡ Quick Access</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+          <button onclick="showSection('vitals')" class="p-3 rounded-xl border-2 border-dashed border-green-200 text-center hover:bg-green-50">
+            <div class="text-2xl mb-1">❤️</div><div class="text-xs font-semibold text-gray-700">Vitals</div>
+          </button>
+          <button onclick="showSection('medications')" class="p-3 rounded-xl border-2 border-dashed border-blue-200 text-center hover:bg-blue-50">
+            <div class="text-2xl mb-1">💊</div><div class="text-xs font-semibold text-gray-700">Medications</div>
+          </button>
+          <button onclick="showSection('messages')" class="p-3 rounded-xl border-2 border-dashed border-purple-200 text-center hover:bg-purple-50">
+            <div class="text-2xl mb-1">💬</div><div class="text-xs font-semibold text-gray-700">Messages</div>
+          </button>
+          <button onclick="showSection('billing')" class="p-3 rounded-xl border-2 border-dashed border-amber-200 text-center hover:bg-amber-50">
+            <div class="text-2xl mb-1">💳</div><div class="text-xs font-semibold text-gray-700">Billing</div>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <button onclick="showSection('hospitals')" class="p-3 rounded-xl border-2 border-dashed border-red-200 text-center hover:bg-red-50">
+            <div class="text-2xl mb-1">🏥</div><div class="text-xs font-semibold text-gray-700">Hospitals</div>
+          </button>
+          <button onclick="showSection('insurance')" class="p-3 rounded-xl border-2 border-dashed border-teal-200 text-center hover:bg-teal-50">
+            <div class="text-2xl mb-1">🛡️</div><div class="text-xs font-semibold text-gray-700">Insurance</div>
+          </button>
+          <button onclick="showSection('coordination')" class="p-3 rounded-xl border-2 border-dashed border-indigo-200 text-center hover:bg-indigo-50">
+            <div class="text-2xl mb-1">🤝</div><div class="text-xs font-semibold text-gray-700">Coordination</div>
+          </button>
+          <button onclick="showToast('📄 Itemized English billing statement generated','📄')" class="p-3 rounded-xl border-2 border-dashed border-gray-200 text-center hover:bg-gray-50">
+            <div class="text-2xl mb-1">📄</div><div class="text-xs font-semibold text-gray-700">Export Report</div>
           </button>
         </div>
       </div>
 
-      <!-- Quick Services -->
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <button onclick="showSection('hospitals')" class="card p-4 text-left hover:shadow-md transition-shadow">
-          <div class="text-2xl mb-2">🏥</div>
-          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_hospitals">Hospital Directory</div>
-          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_hospitals_sub">Find local hospitals</div>
-        </button>
-        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
-          <div class="text-2xl mb-2">🌐</div>
-          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_translation">Medical Translation</div>
-          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_translation_sub">We speak your language</div>
-        </button>
-        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
-          <div class="text-2xl mb-2">📋</div>
-          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_appointment">Book Appointment</div>
-          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_appointment_sub">Schedule a visit</div>
-        </button>
-        <button onclick="showSection('coordination')" class="card p-4 text-left hover:shadow-md transition-shadow">
-          <div class="text-2xl mb-2">🛡️</div>
-          <div class="font-semibold text-gray-800 text-sm" data-i18n="service_insurance">Insurance</div>
-          <div class="text-xs text-gray-400 mt-0.5" data-i18n="service_insurance_sub">International coverage</div>
-        </button>
-      </div>
-
-      <!-- Emergency Contacts -->
+      <!-- Emergency contacts — expanded for expat -->
       <div class="card p-5">
-        <h3 class="font-semibold text-gray-800 mb-3" data-i18n="emergency_contacts">Emergency Contacts</h3>
+        <h3 class="font-semibold text-gray-800 mb-3">🚨 Emergency Contacts</h3>
         <div class="space-y-2">
           <a href="tel:117" class="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
             <span class="text-xl">🚑</span>
-            <div>
-              <div class="font-semibold text-red-700 text-sm" data-i18n="emergency_ambulance">Ambulance</div>
-              <div class="text-xs text-red-500">117</div>
-            </div>
+            <div><div class="font-semibold text-red-700 text-sm">Philippine Ambulance</div><div class="text-xs text-red-500">117</div></div>
           </a>
           <a href="tel:+6374442727" class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors">
             <span class="text-xl">🏥</span>
-            <div>
-              <div class="font-semibold text-blue-700 text-sm">Baguio General Hospital</div>
-              <div class="text-xs text-blue-500">+63 74 442-7727</div>
-            </div>
+            <div><div class="font-semibold text-blue-700 text-sm">Baguio General Hospital</div><div class="text-xs text-blue-500">+63 74 442-7727 · 5 min away</div></div>
           </a>
-          <button onclick="showToast('Calling Care Coordinator Maria Reyes...', '📞')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors text-left">
-            <span class="text-xl">👩‍💼</span>
-            <div>
-              <div class="font-semibold text-purple-700 text-sm" data-i18n="call_coordinator">Call Care Coordinator</div>
-              <div class="text-xs text-purple-500">Maria Reyes · Available now</div>
+          <!-- Expat Plus: embassy + medevac -->
+          <div class="expat-assist">
+            <div class="expat-assist-label">🌍 Expat Assistance — Embassy & Medevac</div>
+            <div class="space-y-2">
+              <button onclick="showToast('US Embassy Manila Emergency: +63 2 5301-2000','📞')" class="w-full flex items-center gap-3 p-2 rounded-xl bg-white border border-purple-100 hover:bg-purple-50 text-left">
+                <span class="text-lg">🏛️</span>
+                <div><div class="font-semibold text-gray-800 text-sm">US Embassy Manila</div><div class="text-xs text-gray-500">Emergency after-hours line</div></div>
+              </button>
+              <button onclick="showToast('SOS International Medevac: +65 6338-7800','📞')" class="w-full flex items-center gap-3 p-2 rounded-xl bg-white border border-purple-100 hover:bg-purple-50 text-left">
+                <span class="text-lg">✈️</span>
+                <div><div class="font-semibold text-gray-800 text-sm">Medical Evacuation (Medevac)</div><div class="text-xs text-gray-500">SOS International · 24/7</div></div>
+              </button>
             </div>
+          </div>
+          <button onclick="showToast('Calling Care Coordinator Maria Reyes...','📞')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors text-left">
+            <span class="text-xl">👩‍💼</span>
+            <div><div class="font-semibold text-purple-700 text-sm" data-i18n="call_coordinator">Call Care Coordinator</div><div class="text-xs text-purple-500">Maria Reyes · Available now</div></div>
           </button>
         </div>
       </div>
+
+    </div><!-- /section-overview -->
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Vitals & Health           -->
+    <!-- (CORE — identical to OFW/Local PH) -->
+    <!-- + Expat layer: unit tooltips        -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-vitals" class="section-hidden">
+
+      <!-- Vitals summary — James Miller's own vitals -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+
+        <div class="vital-card vital-warn">
+          <div class="text-2xl mb-1">❤️</div>
+          <div class="font-bold text-xl text-gray-800">129/83</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">James's Blood Pressure</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">mmHg. James's reading of 129/83 is Stage 1 Hypertension (120–129 systolic or 80–89 diastolic). Target with medication: under 130/80. Normal is under 120/80.</div>
+          </div>
+          <div class="text-xs font-semibold text-amber-500 mt-1">⚠ Stage 1 — Monitor</div>
+          <div class="unit-strip mt-2 justify-center">mmHg</div>
+        </div>
+
+        <div class="vital-card vital-normal">
+          <div class="text-2xl mb-1">💓</div>
+          <div class="font-bold text-xl text-gray-800">70 bpm</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">James's Heart Rate</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">BPM = beats per minute. James's resting rate of 70 bpm is within the normal adult range of 60–100 bpm.</div>
+          </div>
+          <div class="text-xs font-semibold text-green-500 mt-1">✓ Normal</div>
+          <div class="unit-strip mt-2 justify-center">bpm</div>
+        </div>
+
+        <div class="vital-card vital-normal">
+          <div class="text-2xl mb-1">🌡️</div>
+          <div class="font-bold text-xl text-gray-800">36.8°C</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">James's Temperature</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">Celsius. 36.8°C = 98.2°F. Philippine standard is Celsius. Normal range: 36.1–37.2°C (97–99°F).</div>
+          </div>
+          <div class="text-xs font-semibold text-green-500 mt-1">✓ Normal</div>
+          <div class="unit-strip mt-2 justify-center">°C · 98.2°F</div>
+        </div>
+
+        <div class="vital-card vital-warn">
+          <div class="text-2xl mb-1">🫀</div>
+          <div class="font-bold text-xl text-gray-800">218 mg/dL</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">James's Cholesterol</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">Total cholesterol in mg/dL. Target: under 200 mg/dL. James's reading of 218 is borderline high. To convert to mmol/L (UK/EU): divide by 38.67. 218 mg/dL ≈ 5.6 mmol/L.</div>
+          </div>
+          <div class="text-xs font-semibold text-amber-500 mt-1">⚠ Borderline High</div>
+          <div class="unit-strip mt-2 justify-center">mg/dL · 5.6 mmol/L</div>
+        </div>
+
+        <div class="vital-card vital-normal">
+          <div class="text-2xl mb-1">🫁</div>
+          <div class="font-bold text-xl text-gray-800">98%</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">SpO₂ / Oxygen</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">Blood oxygen saturation. 95–100% is normal. Values below 90% require immediate medical attention.</div>
+          </div>
+          <div class="text-xs font-semibold text-green-500 mt-1">✓ Normal</div>
+          <div class="unit-strip mt-2 justify-center">% saturation</div>
+        </div>
+
+        <div class="vital-card vital-normal">
+          <div class="text-2xl mb-1">⚖️</div>
+          <div class="font-bold text-xl text-gray-800">82.1 kg</div>
+          <div class="tooltip-wrap justify-center">
+            <span class="text-xs text-gray-500">James's Weight</span>
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">Kilograms (PH standard). 82.1 kg = 181 lbs = 12 st 13 lbs. Slight downward trend this month — good progress.</div>
+          </div>
+          <div class="text-xs font-semibold text-green-500 mt-1">↓ Trending down</div>
+          <div class="unit-strip mt-2 justify-center">kg · 181 lbs</div>
+        </div>
+
+      </div>
+
+      <!-- Chart -->
+      <div class="card p-5 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-gray-800">📈 James's Vitals History</h3>
+          <div class="flex gap-1">
+            <button onclick="setPeriod(7,this)" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white">7d</button>
+            <button onclick="setPeriod(14,this)" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600">14d</button>
+            <button onclick="setPeriod(30,this)" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600">30d</button>
+          </div>
+        </div>
+        <div style="height:200px"><canvas id="vitals-chart"></canvas></div>
+        <!-- Expat assist: unit guide -->
+        <div class="expat-assist mt-3">
+          <div class="expat-assist-label">📐 Unit Reference Guide</div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-purple-900">
+            <div>🌡️ <strong>°C → °F:</strong> multiply by 9/5, add 32</div>
+            <div>⚖️ <strong>kg → lbs:</strong> multiply by 2.205</div>
+            <div>🫀 <strong>Cholesterol mg/dL → mmol/L:</strong> divide by 38.67</div>
+            <div>❤️ <strong>BP:</strong> same unit globally (mmHg)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- James's Conditions -->
+      <div class="card p-5">
+        <h3 class="font-bold text-gray-800 mb-3">🩺 James's Conditions</h3>
+        <div class="flex gap-2 flex-wrap mb-3">
+          <span class="tag bg-red-100 text-red-700">Hypertension Stage 1</span>
+          <span class="tag bg-amber-100 text-amber-700">Hyperlipidemia</span>
+          <span class="tag bg-blue-100 text-blue-700">Mild Osteoarthritis (Knee)</span>
+        </div>
+        <div class="expat-assist">
+          <div class="expat-assist-label">📋 International Term Reference — Your Diagnoses</div>
+          <div class="space-y-1.5 text-xs text-purple-900">
+            <div><strong>Hypertension Stage 1</strong> = High Blood Pressure (BP 130–139 / 80–89). ICD-10: I10. Use this code on all international insurance claims.</div>
+            <div><strong>Hyperlipidemia</strong> = Elevated blood lipids / high cholesterol. ICD-10: E78.5. Also listed as "Dyslipidemia" on some US insurance forms.</div>
+            <div><strong>Osteoarthritis, Knee</strong> = Degenerative joint disease of the knee. ICD-10: M17.11 (primary, right) / M17.12 (primary, left). Non-insulin, non-diabetic.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-vitals -->
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Care Logs                 -->
+    <!-- (CORE — identical to OFW/Local PH) -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-care-logs" class="section-hidden">
+      <div class="card p-5 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-gray-800">📋 Visit History</h3>
+          <button onclick="showToast('📄 Itemized English billing statement with ICD-10 codes generated','📄')"
+            class="text-xs font-semibold text-purple-700 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50">
+            Export for Insurance →
+          </button>
+        </div>
+        <div id="care-logs-list" class="space-y-4">
+          <!-- populated by JS -->
+        </div>
+      </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SECTION: Hospital Directory -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="section-hospitals" class="hidden">
-      <div class="mb-4">
-        <input type="text" class="input-field" placeholder="Search hospitals, clinics..." data-i18n-placeholder="search_hospitals" />
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Medications               -->
+    <!-- (CORE) + Expat layer: INN names   -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-medications" class="section-hidden">
+
+      <div class="card p-5 mb-4">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-gray-800">💊 James's Medications</h3>
+          <span class="gold-badge">🥇 Gold</span>
+        </div>
+        <p class="text-xs text-gray-400 mb-4">Prescribed by Dr. Ramos · Administered / verified by RN Cathy Ramirez · James can tap pending items to confirm he has taken them</p>
+
+        <div class="mb-4 p-3 rounded-xl flex items-center gap-3" style="background:#faf5ff;border:1px solid #d8b4fe">
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-purple-700">Today: 2 of 4 given</div>
+            <div class="mt-1 h-2 rounded-full bg-purple-100 overflow-hidden">
+              <div class="h-2 rounded-full bg-purple-500" style="width:50%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="med-list" class="space-y-3 mb-4">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Expat assist: INN / international drug name cross-reference — James's meds -->
+        <div class="expat-assist">
+          <div class="expat-assist-label">🌍 International Drug Name Guide (INN) — Your Prescriptions</div>
+          <div class="space-y-2 text-xs text-purple-900">
+            <div class="py-1 border-b border-purple-100">
+              <strong>Amlodipine 5mg</strong> (PH brand: Norvasc / Amloc) — Calcium channel blocker for hypertension. INN same globally. Used in US, EU, and UK under same name.
+            </div>
+            <div class="py-1 border-b border-purple-100">
+              <strong>Atorvastatin 20mg</strong> (PH: Lipitor) — Statin for high cholesterol (Hyperlipidemia). Same INN globally. Target: LDL under 100 mg/dL. Take in the evening.
+            </div>
+            <div class="py-1 border-b border-purple-100">
+              <strong>Aspirin 100mg</strong> — Low-dose antiplatelet / cardiovascular prevention. Widely known globally. Some formularies list as "ASA 100mg".
+            </div>
+            <div class="py-1">
+              <strong>Celecoxib 200mg</strong> (PH: Celebrex) — COX-2 selective NSAID for knee osteoarthritis pain. PRN = "as needed." ICD-10 indication: M17.11. Always take with food.
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="space-y-3">
-        <div class="hospital-card p-4">
-          <div class="flex items-start justify-between mb-2">
-            <div>
-              <div class="font-bold text-gray-800">Baguio General Hospital</div>
-              <div class="text-xs text-gray-500">Baguio City · Government</div>
-            </div>
-            <span class="tag bg-green-100 text-green-700">Emergency</span>
-          </div>
-          <div class="text-xs text-gray-500 mb-2">📍 Governor Pack Road · ⭐ 4.2/5</div>
-          <div class="text-xs text-gray-600 mb-3">Services: General Medicine, Cardiology, Pediatrics, OB-GYN</div>
-          <div class="flex gap-2">
-            <button onclick="showToast('Requesting accompaniment to Baguio General...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
-            <button onclick="showToast('Calling Baguio General Hospital...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
-          </div>
-        </div>
 
-        <div class="hospital-card p-4">
-          <div class="flex items-start justify-between mb-2">
-            <div>
-              <div class="font-bold text-gray-800">Saint Louis University Hospital</div>
-              <div class="text-xs text-gray-500">Baguio City · Private</div>
-            </div>
-            <span class="tag bg-blue-100 text-blue-700">Private</span>
-          </div>
-          <div class="text-xs text-gray-500 mb-2">📍 A. Bonifacio Street · ⭐ 4.6/5</div>
-          <div class="text-xs text-gray-600 mb-3">Services: Cardiology, Neurology, Orthopedics, Oncology</div>
-          <div class="flex gap-2">
-            <button onclick="showToast('Requesting accompaniment to SLU Hospital...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
-            <button onclick="showToast('Calling SLU Hospital...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
-          </div>
-        </div>
+    </div><!-- /section-medications -->
 
-        <div class="hospital-card p-4">
-          <div class="flex items-start justify-between mb-2">
-            <div>
-              <div class="font-bold text-gray-800">Notre Dame de Chartres Hospital</div>
-              <div class="text-xs text-gray-500">Baguio City · Private Catholic</div>
-            </div>
-            <span class="tag bg-purple-100 text-purple-700">Specialty</span>
-          </div>
-          <div class="text-xs text-gray-500 mb-2">📍 Corner of Bokawkan Rd · ⭐ 4.5/5</div>
-          <div class="text-xs text-gray-600 mb-3">Services: Rehabilitation, Geriatrics, Internal Medicine</div>
-          <div class="flex gap-2">
-            <button onclick="showToast('Requesting accompaniment to NDCH...', '🏥')" class="flex-1 py-2 rounded-lg text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
-            <button onclick="showToast('Calling NDCH...', '📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
-          </div>
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Messages                  -->
+    <!-- (CORE — identical to all roles)    -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-messages" class="section-hidden">
+      <div class="card p-5">
+        <h3 class="font-bold text-gray-800 mb-1">💬 Messages</h3>
+        <p class="text-xs text-gray-400 mb-4">With Nurse Cathy · All messages audit-logged</p>
+        <div id="chat-messages" class="space-y-3 mb-4" style="min-height:200px;max-height:400px;overflow-y:auto">
+          <!-- populated by JS -->
+        </div>
+        <div class="flex gap-2 pt-3 border-t border-gray-100">
+          <input type="text" id="msg-input" class="input-field flex-1 text-sm" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+          <button onclick="sendMessage()" class="btn-primary px-4 py-2 text-sm">Send</button>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SECTION: Care Coordination -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="section-coordination" class="hidden">
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Billing                   -->
+    <!-- (CORE) + Expat layer: global pay   -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-billing" class="section-hidden">
 
-      <!-- Book Appointment -->
+      <div class="card p-5 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-gray-800">💳 Subscription</h3>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">Active</span>
+        </div>
+
+        <!-- Gold plan card -->
+        <div class="p-4 rounded-xl mb-4" style="background:linear-gradient(135deg,#5b21b6,#8b5cf6);color:white">
+          <div class="text-xs opacity-75 mb-1">Current Plan · Account Holder</div>
+          <div class="font-bold text-lg">🥇 Gold — 30 visits/month</div>
+          <div class="text-sm opacity-90 mt-0.5">James Miller · Gold Member · Baguio City, Philippines</div>
+          <div class="flex items-center justify-between mt-3">
+            <div>
+              <div class="text-xs opacity-75">Monthly Fee (PHP)</div>
+              <div class="font-bold text-xl">₱5,500</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs opacity-75">USD equiv.</div>
+              <div class="font-bold text-lg">~$95</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs opacity-75">Next Due</div>
+              <div class="font-bold">July 1, 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visits progress -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs text-gray-500 mb-1.5">
+            <span>Visits used this month</span><span class="font-semibold text-gray-700">12 / 30</span>
+          </div>
+          <div class="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+            <div class="h-2.5 rounded-full bg-purple-500" style="width:40%"></div>
+          </div>
+        </div>
+
+        <!-- CORE payment methods (local) -->
+        <h4 class="font-semibold text-gray-800 text-sm mb-2">Local Payment</h4>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <button onclick="showToast('GCash payment link generated 📱','💳')" class="p-3 rounded-xl border-2 border-green-200 bg-green-50 text-center hover:bg-green-100">
+            <div class="text-xl mb-1">📱</div><div class="text-xs font-bold text-green-700">GCash</div>
+          </button>
+          <button onclick="showToast('Maya payment link generated 📱','💳')" class="p-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-center hover:bg-blue-100">
+            <div class="text-xl mb-1">💙</div><div class="text-xs font-bold text-blue-700">Maya</div>
+          </button>
+        </div>
+
+        <!-- Expat assist: global payment gateways -->
+        <div class="expat-assist mb-3">
+          <div class="expat-assist-label">🌍 Global Payment — Expat Gold</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="showToast('Stripe international payment link sent to your email 💳','💳')" class="p-3 rounded-xl border-2 border-purple-200 bg-white text-center hover:bg-purple-50">
+              <div class="text-xl mb-1">💳</div><div class="text-xs font-bold text-purple-700">Stripe (Intl Card)</div><div class="text-xs text-gray-400">Visa / MC / Amex</div>
+            </button>
+            <button onclick="showToast('PayPal payment request sent · USD $95.00 💵','💵')" class="p-3 rounded-xl border-2 border-blue-200 bg-white text-center hover:bg-blue-50">
+              <div class="text-xl mb-1">🅿️</div><div class="text-xs font-bold text-blue-700">PayPal</div><div class="text-xs text-gray-400">USD / EUR / GBP</div>
+            </button>
+            <button onclick="showToast('Wise transfer details sent · ₱5,500 (~$95)','🏦')" class="p-3 rounded-xl border-2 border-gray-200 bg-white text-center hover:bg-gray-50">
+              <div class="text-xl mb-1">🏦</div><div class="text-xs font-bold text-gray-700">Wise (Transfer)</div><div class="text-xs text-gray-400">Low FX fees</div>
+            </button>
+            <button onclick="showToast('SWIFT/BDO wire transfer details sent to your email','🏦')" class="p-3 rounded-xl border-2 border-gray-200 bg-white text-center hover:bg-gray-50">
+              <div class="text-xl mb-1">🌐</div><div class="text-xs font-bold text-gray-700">Bank Wire</div><div class="text-xs text-gray-400">SWIFT / BIC</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- FX notice -->
+        <div class="p-3 rounded-xl text-xs" style="background:#faf5ff;border:1px solid #d8b4fe;color:#5b21b6">
+          💱 <strong>Exchange rate note:</strong> ₱1 = ~$0.0173 USD today. Stripe and PayPal charge ~2.9% + $0.30 per transaction. Wise typically offers the best FX rates for international transfers.
+        </div>
+      </div>
+
+      <!-- Payment history -->
+      <div class="card p-5">
+        <h3 class="font-bold text-gray-800 mb-4">🧾 Payment History</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-green-50">
+            <div><div class="font-semibold text-gray-800">June 2026 — Gold Plan</div><div class="text-xs text-gray-500">Paid via Stripe · June 1, 2026</div></div>
+            <div class="text-right"><div class="font-bold text-green-700">₱5,500</div><div class="text-xs text-gray-400">~$95</div></div>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-green-50">
+            <div><div class="font-semibold text-gray-800">May 2026 — Gold Plan</div><div class="text-xs text-gray-500">Paid via PayPal · May 1, 2026</div></div>
+            <div class="text-right"><div class="font-bold text-green-700">₱5,500</div><div class="text-xs text-gray-400">~$95</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-billing -->
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Audit Log                 -->
+    <!-- (CORE — identical to all roles)    -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-audit" class="section-hidden">
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="audit-dot"></div>
+          <h3 class="font-bold text-gray-800">Audit Trail</h3>
+          <span class="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Immutable · GOLD</span>
+        </div>
+        <div id="audit-log-list" class="space-y-1 max-h-[480px] overflow-y-auto">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Hospital Navigator        -->
+    <!-- (EXPAT PLUS — with branch context) -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-hospitals" class="section-hidden">
+      <div class="expat-assist mb-4" style="border-radius:14px;border-left-width:4px">
+        <div class="expat-assist-label">🌍 Expat Navigation Guide</div>
+        <p class="text-xs text-purple-900">Philippine hospitals operate under DOH regulation. Private hospitals generally offer more English-speaking staff. Your Gold tier includes nurse accompaniment and full medical translation at any listed facility.</p>
+      </div>
+      <div class="mb-3">
+        <input type="text" class="input-field" placeholder="Search hospitals..." id="hospital-search" oninput="filterHospitals(this.value)" />
+      </div>
+      <div id="hospital-list" class="space-y-3">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Care Coordination         -->
+    <!-- (EXPAT PLUS)                       -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-coordination" class="section-hidden">
       <div class="card p-5 mb-4">
         <h3 class="font-semibold text-gray-800 mb-4" data-i18n="book_appointment">📋 Book Appointment</h3>
         <div class="space-y-3">
@@ -274,8 +752,9 @@
             <select class="input-field">
               <option data-i18n="service_general">General Check-up</option>
               <option>Cardiology</option>
-              <option>Lab Tests</option>
-              <option>Specialist Consultation</option>
+              <option>Endocrinology / Diabetes</option>
+              <option>Geriatrics</option>
+              <option>Rehabilitation</option>
             </select>
           </div>
           <div>
@@ -285,88 +764,192 @@
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1.5" data-i18n="extras_label">Additional Services</label>
             <div class="space-y-2">
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" checked style="accent-color:#8b5cf6" />
-                <span data-i18n="translation_service">🌐 Medical Translation (English)</span>
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" style="accent-color:#8b5cf6" />
-                <span data-i18n="accompaniment_service">🤝 Nurse Accompaniment</span>
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" style="accent-color:#8b5cf6" />
-                <span data-i18n="insurance_service">🛡️ Insurance Coordination</span>
-              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" checked style="accent-color:#8b5cf6" /><span data-i18n="translation_service">🌐 Medical Translation (English)</span></label>
+              <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" style="accent-color:#8b5cf6" /><span data-i18n="accompaniment_service">🤝 Nurse Accompaniment</span></label>
+              <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" style="accent-color:#8b5cf6" /><span data-i18n="insurance_service">🛡️ Insurance Pre-authorisation</span></label>
             </div>
           </div>
-          <button onclick="showToast('Appointment request submitted! Coordinator will confirm within 2 hours.', '📋')"
+          <button onclick="showToast('Appointment request submitted! Coordinator will confirm within 2 hours.','📋')"
             class="w-full py-3 rounded-xl text-white font-semibold text-sm hover:opacity-90" style="background:#8b5cf6">
             <span data-i18n="btn_submit_appointment">Submit Request</span>
           </button>
         </div>
       </div>
-
-      <!-- Coordination History -->
+      <!-- History -->
       <div class="card p-5">
         <h3 class="font-semibold text-gray-800 mb-3" data-i18n="coordination_history">Coordination History</h3>
         <div class="space-y-2">
           <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
             <span class="text-xl">✅</span>
-            <div>
-              <div class="text-sm font-medium text-gray-800">Lab Test — Baguio General</div>
-              <div class="text-xs text-gray-400">June 10, 2026 · Translation provided</div>
-            </div>
+            <div><div class="text-sm font-medium text-gray-800">Lab Test — Baguio General</div><div class="text-xs text-gray-400">June 10, 2026 · Translation provided</div></div>
           </div>
           <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
             <span class="text-xl">✅</span>
-            <div>
-              <div class="text-sm font-medium text-gray-800">Cardiology — SLU Hospital</div>
-              <div class="text-xs text-gray-400">May 22, 2026 · Accompaniment + Insurance</div>
-            </div>
+            <div><div class="text-sm font-medium text-gray-800">Cardiology — SLU Hospital</div><div class="text-xs text-gray-400">May 22, 2026 · Accompaniment + Insurance</div></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SECTION: Privacy & Consent -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <div id="section-privacy" class="hidden">
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Insurance Claims          -->
+    <!-- (EXPAT PLUS — full feature)        -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-insurance" class="section-hidden">
+
+      <!-- Active coverage -->
       <div class="card p-5 mb-4">
-        <h3 class="font-semibold text-gray-800 mb-4" data-i18n="privacy_title">🔒 Privacy & Consent</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-gray-800">🛡️ Insurance Coverage</h3>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">Active</span>
+        </div>
         <div class="space-y-3">
-          <div class="p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
-            <span class="text-xl">✅</span>
+          <div class="p-3 rounded-xl border border-blue-100 bg-blue-50 flex items-center gap-3">
+            <span class="text-2xl">🌐</span>
             <div>
-              <div class="font-medium text-gray-800 text-sm" data-i18n="consent_status">Consent Status</div>
-              <div class="text-xs text-green-600" data-i18n="consent_active">Active · Expires January 15, 2027</div>
+              <div class="font-semibold text-gray-800 text-sm">AXA International Health</div>
+              <div class="text-xs text-gray-500">Policy #AXA-2024-09871 · Valid until Dec 31, 2026</div>
+              <div class="text-xs text-green-600 font-semibold mt-0.5">Coverage: USD $500,000/yr · Cashless at SLU Hospital</div>
             </div>
           </div>
-          <div class="text-xs text-gray-600 p-3 bg-gray-50 rounded-xl" data-i18n="privacy_explanation">
-            Your health information is only shared with your designated care coordinator and authorized Family CareLink staff. You can revoke consent at any time.
+          <div class="p-3 rounded-xl border border-purple-100 bg-purple-50 flex items-center gap-3">
+            <span class="text-2xl">🏛️</span>
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">PhilHealth (Voluntary)</div>
+              <div class="text-xs text-gray-500">Member since 2023 · Monthly: ₱1,000</div>
+              <div class="text-xs text-purple-600 font-semibold mt-0.5">Covers room & board at government hospitals</div>
+            </div>
           </div>
-          <button onclick="showToast('Consent revocation request submitted. Admin will contact you.', '🔒')"
-            class="w-full py-2.5 rounded-xl text-sm font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100" data-i18n="btn_revoke">
-            Revoke Consent
-          </button>
         </div>
       </div>
 
-      <!-- Privacy Policy in multiple languages -->
+      <!-- Reimbursement guide -->
+      <div class="card p-5 mb-4">
+        <h3 class="font-bold text-gray-800 mb-3">📋 Foreign Reimbursement Concierge</h3>
+        <p class="text-xs text-gray-500 mb-4">As a Gold Expat member, we generate all documentation needed for foreign insurer reimbursement. This includes ICD-10 coded statements, English clinical summaries, and itemized cost breakdowns.</p>
+        <div class="space-y-2 mb-4">
+          <button onclick="showToast('📄 Itemized English billing statement generated with ICD-10 codes','📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 text-left transition-all">
+            <span class="text-xl">📄</span>
+            <div><div class="font-semibold text-gray-800 text-sm">Generate Itemized Statement</div><div class="text-xs text-gray-500">English · ICD-10 codes · PDF</div></div>
+            <span class="ml-auto text-purple-600 font-bold text-sm">→</span>
+          </button>
+          <button onclick="showToast('📋 Clinical summary letter prepared by RN Cathy Ramirez','📋')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 text-left transition-all">
+            <span class="text-xl">📋</span>
+            <div><div class="font-semibold text-gray-800 text-sm">Clinical Summary Letter</div><div class="text-xs text-gray-500">For insurer pre-approval · Signed by RN</div></div>
+            <span class="ml-auto text-purple-600 font-bold text-sm">→</span>
+          </button>
+          <button onclick="showToast('📊 Reimbursement compliance checklist sent to your email','📊')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 text-left transition-all">
+            <span class="text-xl">📊</span>
+            <div><div class="font-semibold text-gray-800 text-sm">Compliance Checklist</div><div class="text-xs text-gray-500">AXA / BUPA / Cigna / Allianz formats</div></div>
+            <span class="ml-auto text-purple-600 font-bold text-sm">→</span>
+          </button>
+        </div>
+        <div class="expat-assist">
+          <div class="expat-assist-label">📌 Common Reimbursement Requirements</div>
+          <div class="space-y-1 text-xs text-purple-900">
+            <div>✓ Original receipts (OR) — always requested from our nurse</div>
+            <div>✓ ICD-10 diagnosis codes — included in our generated statements</div>
+            <div>✓ Doctor's referral letter — requested within 24 hrs via care coordinator</div>
+            <div>✓ Proof of payment — digital receipt provided after each visit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim history -->
+      <div class="card p-5">
+        <h3 class="font-bold text-gray-800 mb-3">📂 Claim History</h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-100">
+            <div><div class="font-semibold text-gray-800 text-sm">AXA Claim — Cardiology Visit</div><div class="text-xs text-gray-500">May 22, 2026 · SLU Hospital</div></div>
+            <span class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">Approved</span>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-yellow-50 border border-yellow-100">
+            <div><div class="font-semibold text-gray-800 text-sm">AXA Claim — Lab Tests</div><div class="text-xs text-gray-500">June 10, 2026 · BGH</div></div>
+            <span class="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">Pending</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-insurance -->
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- SECTION: Privacy & Consent         -->
+    <!-- (CORE + multilingual policy)       -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="section-privacy" class="section-hidden">
+      <div class="card p-5 mb-4">
+        <h3 class="font-semibold text-gray-800 mb-4" data-i18n="privacy_title">🔒 Privacy & Data Sharing</h3>
+        <div class="space-y-3">
+          <!-- Direct consent — James authorises his own nurse -->
+          <div class="p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+            <span class="text-xl">✅</span>
+            <div>
+              <div class="font-medium text-gray-800 text-sm" data-i18n="consent_status">James's Consent Status</div>
+              <div class="text-xs text-green-600" data-i18n="consent_active">Active · Expires January 15, 2027</div>
+              <div class="text-xs text-gray-400 mt-0.5">Direct consent — granted by James · No proxy required</div>
+            </div>
+            <div class="ml-auto audit-dot"></div>
+          </div>
+          <div class="text-xs text-gray-600 p-3 bg-gray-50 rounded-xl" data-i18n="privacy_explanation">
+            James's health data is shared only with his nurse, his care coordinator, and any people he has personally authorised below.
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="showToast('James\'s consent renewed. Audit log updated.','✅')" class="py-2.5 rounded-xl text-sm font-medium bg-green-600 text-white hover:bg-green-700">Renew Consent</button>
+            <button onclick="showToast('Consent revocation submitted. James\'s care coordinator will be notified.','🔒')" class="py-2.5 rounded-xl text-sm font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100" data-i18n="btn_revoke">Revoke</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shared Access — James controls who else can view his dashboard -->
+      <div class="card p-5 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-gray-800">👥 Shared Dashboard Access</h3>
+          <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-bold">Gold Feature</span>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">
+          James controls who can view this dashboard. Family members or trusted contacts he adds below will receive read-only access — they can stay informed about his nurse visits, vitals, and medications without separate credentials.
+        </p>
+
+        <!-- Active shared access users — rendered from currentUser.shared_access_users -->
+        <div id="shared-access-list" class="space-y-2 mb-4">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Add new delegate -->
+        <div class="expat-assist">
+          <div class="expat-assist-label">➕ Grant New Access</div>
+          <div class="space-y-2">
+            <input type="text" id="delegate-name" class="input-field text-sm" placeholder="Name (e.g. Sarah Miller)" />
+            <input type="text" id="delegate-email" class="input-field text-sm" placeholder="Email address" />
+            <select id="delegate-relation" class="input-field text-sm">
+              <option value="">Relationship...</option>
+              <option>Daughter</option>
+              <option>Son</option>
+              <option>Spouse</option>
+              <option>Other Family</option>
+            </select>
+            <button onclick="grantSharedAccess()" class="w-full py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90" style="background:#8b5cf6">
+              Send Access Invitation
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multilingual policy -->
       <div class="card p-5">
         <h3 class="font-semibold text-gray-800 mb-3" data-i18n="privacy_policy_title">Privacy Policy</h3>
         <div class="space-y-2">
-          <button onclick="showToast('Opening Privacy Policy in English...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
-            <span>🇺🇸</span> <span class="text-sm text-gray-700">Privacy Policy — English</span>
+          <button onclick="showToast('Opening Privacy Policy in English...','📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇺🇸</span><span class="text-sm text-gray-700">Privacy Policy — English</span>
           </button>
-          <button onclick="showToast('Abriendo política de privacidad en español...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
-            <span>🇪🇸</span> <span class="text-sm text-gray-700">Política de Privacidad — Español</span>
+          <button onclick="showToast('Abriendo política de privacidad en español...','📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇪🇸</span><span class="text-sm text-gray-700">Política de Privacidad — Español</span>
           </button>
-          <button onclick="showToast('개인정보 처리방침을 여는 중...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
-            <span>🇰🇷</span> <span class="text-sm text-gray-700">개인정보 처리방침 — 한국어</span>
+          <button onclick="showToast('개인정보 처리방침을 여는 중...','📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇰🇷</span><span class="text-sm text-gray-700">개인정보 처리방침 — 한국어</span>
           </button>
-          <button onclick="showToast('プライバシーポリシーを開く...', '📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
-            <span>🇯🇵</span> <span class="text-sm text-gray-700">プライバシーポリシー — 日本語</span>
+          <button onclick="showToast('プライバシーポリシーを開く...','📄')" class="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100">
+            <span>🇯🇵</span><span class="text-sm text-gray-700">プライバシーポリシー — 日本語</span>
           </button>
         </div>
       </div>
@@ -375,20 +958,32 @@
   </main>
 </div>
 
-<!-- Mobile Nav -->
-<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2">
-  <div class="flex justify-around">
-    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-purple-700 py-1 px-3">
-      <span class="text-lg">🏠</span> <span data-i18n="nav_overview">Home</span>
+<!-- Mobile Bottom Nav (scrollable) -->
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 py-2" style="display:none">
+  <div class="flex justify-around overflow-x-auto scrollbar-hide px-1" style="gap:2px">
+    <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-xs text-purple-700 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">🏠</span>Home
     </button>
-    <button onclick="showSection('hospitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
-      <span class="text-lg">🏥</span> <span data-i18n="nav_hospitals">Hospitals</span>
+    <button onclick="showSection('vitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">❤️</span>Vitals
     </button>
-    <button onclick="showSection('coordination')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
-      <span class="text-lg">🤝</span> <span data-i18n="nav_coordination">Book</span>
+    <button onclick="showSection('medications')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">💊</span>Meds
     </button>
-    <button onclick="showSection('privacy')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-3">
-      <span class="text-lg">🔒</span> <span data-i18n="nav_privacy">Privacy</span>
+    <button onclick="showSection('messages')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">💬</span>Chat
+    </button>
+    <button onclick="showSection('billing')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">💳</span>Billing
+    </button>
+    <button onclick="showSection('insurance')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">🛡️</span>Insurance
+    </button>
+    <button onclick="showSection('hospitals')" class="flex flex-col items-center gap-0.5 text-xs text-gray-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">🏥</span>Hospitals
+    </button>
+    <button onclick="Auth.signOut()" class="flex flex-col items-center gap-0.5 text-xs text-red-500 py-1 px-2 flex-shrink-0">
+      <span class="text-lg">🚪</span>Sign Out
     </button>
   </div>
 </nav>
@@ -398,136 +993,457 @@
 <script>
   const currentUser = Auth.requireAuth('expat');
   if (!currentUser) throw new Error('Redirecting...');
-  document.getElementById('sidebar-name').textContent = currentUser.name;
+  document.getElementById('sidebar-name').textContent = currentUser.name || 'Expat Member';
 
-  // ── i18n Strings ───────────────────────────────────────────
-  const translations = {
-    en: {
-      nav_overview: 'Overview', nav_hospitals: 'Hospitals', nav_coordination: 'Coordination', nav_privacy: 'Privacy',
-      welcome_title: 'Welcome, James!', welcome_sub: 'Your dedicated care coordinator is ready to assist.',
-      coordinator_name: 'Maria Reyes — Care Coordinator', coordinator_available: 'Available 8:00 AM – 6:00 PM',
-      btn_contact: 'Contact', service_hospitals: 'Hospital Directory', service_hospitals_sub: 'Find local hospitals',
-      service_translation: 'Medical Translation', service_translation_sub: 'We speak your language',
-      service_appointment: 'Book Appointment', service_appointment_sub: 'Schedule a visit',
-      service_insurance: 'Insurance', service_insurance_sub: 'International coverage',
-      emergency_contacts: 'Emergency Contacts', emergency_ambulance: 'Ambulance', call_coordinator: 'Call Care Coordinator',
-      book_appointment: '📋 Book Appointment', hospital_label: 'Hospital / Clinic', service_label: 'Service Needed',
-      date_label: 'Preferred Date', extras_label: 'Additional Services',
-      translation_service: '🌐 Medical Translation (English)', accompaniment_service: '🤝 Nurse Accompaniment',
-      insurance_service: '🛡️ Insurance Coordination', btn_submit_appointment: 'Submit Request',
-      coordination_history: 'Coordination History', privacy_title: '🔒 Privacy & Consent',
-      consent_status: 'Consent Status', consent_active: 'Active · Expires January 15, 2027',
-      privacy_explanation: 'Your health information is only shared with your designated care coordinator and authorized Family CareLink staff. You can revoke consent at any time.',
-      btn_revoke: 'Revoke Consent', privacy_policy_title: 'Privacy Policy', page_overview: 'Overview',
-      service_general: 'General Check-up',
-    },
-    es: {
-      nav_overview: 'Inicio', nav_hospitals: 'Hospitales', nav_coordination: 'Coordinación', nav_privacy: 'Privacidad',
-      welcome_title: '¡Bienvenido, James!', welcome_sub: 'Tu coordinadora de atención está lista para ayudarte.',
-      coordinator_name: 'María Reyes — Coordinadora de Atención', coordinator_available: 'Disponible 8:00 AM – 6:00 PM',
-      btn_contact: 'Contactar', service_hospitals: 'Directorio de Hospitales', service_hospitals_sub: 'Encuentra hospitales locales',
-      service_translation: 'Traducción Médica', service_translation_sub: 'Hablamos tu idioma',
-      service_appointment: 'Reservar Cita', service_appointment_sub: 'Programa una visita',
-      service_insurance: 'Seguro', service_insurance_sub: 'Cobertura internacional',
-      emergency_contacts: 'Contactos de Emergencia', emergency_ambulance: 'Ambulancia',
-      call_coordinator: 'Llamar Coordinadora', book_appointment: '📋 Reservar Cita',
-      hospital_label: 'Hospital / Clínica', service_label: 'Servicio Necesario',
-      date_label: 'Fecha Preferida', extras_label: 'Servicios Adicionales',
-      translation_service: '🌐 Traducción Médica (Español)', accompaniment_service: '🤝 Acompañamiento de Enfermera',
-      insurance_service: '🛡️ Coordinación de Seguro', btn_submit_appointment: 'Enviar Solicitud',
-      coordination_history: 'Historial de Coordinación', privacy_title: '🔒 Privacidad y Consentimiento',
-      consent_status: 'Estado de Consentimiento', consent_active: 'Activo · Expira el 15 de enero de 2027',
-      privacy_explanation: 'Tu información de salud solo se comparte con tu coordinadora y personal autorizado de Family CareLink.',
-      btn_revoke: 'Revocar Consentimiento', privacy_policy_title: 'Política de Privacidad', page_overview: 'Inicio',
-      service_general: 'Chequeo General',
-    },
-    ko: {
-      nav_overview: '홈', nav_hospitals: '병원', nav_coordination: '조정', nav_privacy: '개인정보',
-      welcome_title: '안녕하세요, James님!', welcome_sub: '전담 케어 코디네이터가 도움을 드릴 준비가 되어 있습니다.',
-      coordinator_name: 'Maria Reyes — 케어 코디네이터', coordinator_available: '이용 가능 오전 8시 – 오후 6시',
-      btn_contact: '연락', service_hospitals: '병원 디렉토리', service_hospitals_sub: '현지 병원 찾기',
-      service_translation: '의료 통역', service_translation_sub: '귀하의 언어로 소통합니다',
-      service_appointment: '예약', service_appointment_sub: '방문 일정 잡기',
-      service_insurance: '보험', service_insurance_sub: '국제 보장',
-      emergency_contacts: '긴급 연락처', emergency_ambulance: '구급차',
-      call_coordinator: '코디네이터 전화', book_appointment: '📋 예약하기',
-      hospital_label: '병원 / 클리닉', service_label: '필요한 서비스',
-      date_label: '선호 날짜', extras_label: '추가 서비스',
-      translation_service: '🌐 의료 통역 (한국어)', accompaniment_service: '🤝 간호사 동행',
-      insurance_service: '🛡️ 보험 조정', btn_submit_appointment: '요청 제출',
-      coordination_history: '조정 이력', privacy_title: '🔒 개인정보 및 동의',
-      consent_status: '동의 상태', consent_active: '활성 · 2027년 1월 15일 만료',
-      privacy_explanation: '귀하의 건강 정보는 지정된 케어 코디네이터와 Family CareLink 인증 직원과만 공유됩니다.',
-      btn_revoke: '동의 철회', privacy_policy_title: '개인정보 처리방침', page_overview: '홈',
-      service_general: '일반 검진',
-    },
-    ja: {
-      nav_overview: 'ホーム', nav_hospitals: '病院', nav_coordination: '調整', nav_privacy: 'プライバシー',
-      welcome_title: 'Jamesさん、ようこそ！', welcome_sub: '専任のケアコーディネーターがお手伝いします。',
-      coordinator_name: 'Maria Reyes — ケアコーディネーター', coordinator_available: '午前8時〜午後6時対応',
-      btn_contact: '連絡', service_hospitals: '病院ディレクトリ', service_hospitals_sub: '地元の病院を探す',
-      service_translation: '医療通訳', service_translation_sub: 'あなたの言語で対応',
-      service_appointment: '予約', service_appointment_sub: '訪問のスケジュール',
-      service_insurance: '保険', service_insurance_sub: '国際保障',
-      emergency_contacts: '緊急連絡先', emergency_ambulance: '救急車',
-      call_coordinator: 'コーディネーターに電話', book_appointment: '📋 予約する',
-      hospital_label: '病院 / クリニック', service_label: '必要なサービス',
-      date_label: '希望日', extras_label: '追加サービス',
-      translation_service: '🌐 医療通訳（日本語）', accompaniment_service: '🤝 看護師同行',
-      insurance_service: '🛡️ 保険調整', btn_submit_appointment: 'リクエストを送信',
-      coordination_history: '調整履歴', privacy_title: '🔒 プライバシーと同意',
-      consent_status: '同意状況', consent_active: '有効 · 2027年1月15日まで',
-      privacy_explanation: 'あなたの健康情報は、指定されたケアコーディネーターと承認されたFamily CareLinksスタッフのみと共有されます。',
-      btn_revoke: '同意を取り消す', privacy_policy_title: 'プライバシーポリシー', page_overview: 'ホーム',
-      service_general: '一般健康診断',
-    },
+  // ── Section Management ────────────────────────────────────
+  const SECTIONS = ['overview','vitals','care-logs','medications','messages','billing','audit','hospitals','coordination','insurance','privacy'];
+  const SECTION_META = {
+    'overview':     ['Overview',                  'James Miller · Gold Member · Baguio City'],
+    'vitals':       ['James\'s Vitals & Health',  'Unit tooltips enabled · Gold access'],
+    'care-logs':    ['James\'s Care Logs',         'Full visit history · Export ready'],
+    'medications':  ['James\'s Medications',       'Tap to confirm intake · INN cross-reference'],
+    'messages':     ['Messages',                   'With Nurse Cathy · Audit-logged'],
+    'billing':      ['Billing',                    'Global payment options · Gold Tier'],
+    'audit':        ['Audit Log',                  'Immutable · GOLD clearance'],
+    'hospitals':    ['Hospital Navigator',         'Nearby facilities · Baguio City'],
+    'coordination': ['Care Coordination',          'Translation & accompaniment'],
+    'insurance':    ['James\'s Insurance',         'Reimbursement concierge · AXA'],
+    'privacy':      ['Privacy & Data',             'Consent · Shared access settings'],
   };
-
-  let currentLang = 'en';
-
-  function setLanguage(lang) {
-    currentLang = lang;
-    const t = translations[lang];
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.dataset.i18n;
-      if (t[key]) el.textContent = t[key];
-    });
-    document.querySelectorAll('[data-lang]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.lang === lang);
-    });
-    document.documentElement.lang = lang;
-    AuditLog.write({ action: 'LANGUAGE_CHANGED', resource: 'expat_dashboard', details: { language: lang } });
-    showToast(`Language set to ${lang.toUpperCase()}`, '🌐');
-  }
-
-  // ── Sections ──────────────────────────────────────────────
-  const sections = ['overview', 'hospitals', 'coordination', 'privacy'];
+  let vitalsChart = null;
 
   function showSection(name) {
-    sections.forEach(s => document.getElementById('section-' + s)?.classList.add('hidden'));
-    document.getElementById('section-' + name)?.classList.remove('hidden');
+    SECTIONS.forEach(s => {
+      document.getElementById('section-' + s)?.classList.toggle('section-hidden', s !== name);
+    });
     document.querySelectorAll('[data-section]').forEach(el => {
       el.classList.toggle('active', el.dataset.section === name);
       el.classList.toggle('text-white', el.dataset.section === name);
       el.classList.toggle('text-purple-200', el.dataset.section !== name);
     });
-    const t = translations[currentLang];
-    const titleMap = { overview: 'page_overview', hospitals: 'nav_hospitals', coordination: 'nav_coordination', privacy: 'nav_privacy' };
-    if (t[titleMap[name]]) document.getElementById('page-title').textContent = t[titleMap[name]];
+    const [title, sub] = SECTION_META[name] || ['', ''];
+    document.getElementById('page-title').textContent = title;
+    document.getElementById('page-subtitle').textContent = sub;
+
+    // Back button: show on all sub-pages except overview
+    const backBtn = document.getElementById('back-btn');
+    if (name === 'overview') {
+      backBtn.classList.add('hidden'); backBtn.classList.remove('flex');
+    } else {
+      backBtn.classList.remove('hidden'); backBtn.classList.add('flex');
+    }
+
+    // Lazy-load section data
+    if (name === 'vitals') initVitalsChart(7);
+    if (name === 'care-logs') renderCareLogs();
+    if (name === 'medications') renderMeds();
+    if (name === 'messages') renderMessages();
+    if (name === 'hospitals') renderHospitals();
+    if (name === 'audit') renderAudit();
+    if (name === 'privacy') renderSharedAccess();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    AuditLog.write({ action: 'SECTION_VIEWED', resource: 'expat_dashboard', details: { section: name } });
     return false;
+  }
+
+  // ── i18n ─────────────────────────────────────────────────
+  const translations = {
+    en: {
+      nav_overview:'Overview', btn_back:'← Back', page_overview:'Overview',
+      welcome_title:'James\'s Care Dashboard', welcome_sub:'James\'s Nurse on Wheels is scheduled to arrive at 9:00 AM.',
+      coordinator_name:'Maria Reyes — James\'s Care Coordinator', coordinator_available:'Available 8:00 AM – 6:00 PM',
+      btn_contact:'Contact', call_coordinator:'Call James\'s Coordinator',
+      book_appointment:'📋 Book Appointment', hospital_label:'Hospital / Clinic',
+      service_label:'Service Needed', date_label:'Preferred Date', extras_label:'Additional Services',
+      translation_service:'🌐 Medical Translation (English)', accompaniment_service:'🤝 Nurse Accompaniment',
+      insurance_service:'🛡️ Insurance Pre-authorisation', btn_submit_appointment:'Submit Request',
+      coordination_history:'Coordination History', privacy_title:'🔒 Privacy & Data Sharing',
+      consent_status:'James\'s Consent Status', consent_active:'Active · Expires January 15, 2027',
+      privacy_explanation:'James\'s health data is shared only with his nurse, his care coordinator, and any people he has personally authorised below.',
+      btn_revoke:'Revoke Consent', privacy_policy_title:'Privacy Policy',
+      service_general:'General Check-up',
+    },
+    es: {
+      nav_overview:'Inicio', btn_back:'← Volver', page_overview:'Inicio',
+      welcome_title:'Panel de Atención de James', welcome_sub:'La Enfermera a Domicilio de James llega a las 9:00 AM.',
+      coordinator_name:'María Reyes — Coordinadora de James', coordinator_available:'Disponible 8:00 AM – 6:00 PM',
+      btn_contact:'Contactar', call_coordinator:'Llamar a la Coordinadora de James',
+      book_appointment:'📋 Reservar Cita', hospital_label:'Hospital / Clínica',
+      service_label:'Servicio Necesario', date_label:'Fecha Preferida', extras_label:'Servicios Adicionales',
+      translation_service:'🌐 Traducción Médica (Español)', accompaniment_service:'🤝 Acompañamiento',
+      insurance_service:'🛡️ Pre-autorización de Seguro', btn_submit_appointment:'Enviar Solicitud',
+      coordination_history:'Historial de Coordinación', privacy_title:'🔒 Privacidad y Datos',
+      consent_status:'Estado de Consentimiento de James', consent_active:'Activo · Expira el 15 de enero de 2027',
+      privacy_explanation:'Los datos de salud de James solo se comparten con su enfermera, coordinadora y las personas que él haya autorizado.',
+      btn_revoke:'Revocar Consentimiento', privacy_policy_title:'Política de Privacidad',
+      service_general:'Chequeo General',
+    },
+    ko: {
+      nav_overview:'홈', btn_back:'← 뒤로', page_overview:'홈',
+      welcome_title:'James의 케어 대시보드', welcome_sub:'James의 방문 간호사가 오전 9시에 도착할 예정입니다.',
+      coordinator_name:'Maria Reyes — James의 케어 코디네이터', coordinator_available:'오전 8시 – 오후 6시',
+      btn_contact:'연락', call_coordinator:'James의 코디네이터에게 전화',
+      book_appointment:'📋 예약하기', hospital_label:'병원 / 클리닉',
+      service_label:'필요한 서비스', date_label:'선호 날짜', extras_label:'추가 서비스',
+      translation_service:'🌐 의료 통역 (한국어)', accompaniment_service:'🤝 간호사 동행',
+      insurance_service:'🛡️ 보험 사전 승인', btn_submit_appointment:'요청 제출',
+      coordination_history:'조정 이력', privacy_title:'🔒 개인정보 및 데이터 공유',
+      consent_status:'James의 동의 상태', consent_active:'활성 · 2027년 1월 15일 만료',
+      privacy_explanation:'James의 건강 데이터는 그의 간호사, 코디네이터, 그리고 그가 직접 승인한 사람들과만 공유됩니다.',
+      btn_revoke:'동의 철회', privacy_policy_title:'개인정보 처리방침',
+      service_general:'일반 검진',
+    },
+    ja: {
+      nav_overview:'ホーム', btn_back:'← 戻る', page_overview:'ホーム',
+      welcome_title:'Jamesさんのケアダッシュボード', welcome_sub:'Jamesさんの担当ナースが午前9時に伺います。',
+      coordinator_name:'Maria Reyes — Jamesさんのケアコーディネーター', coordinator_available:'午前8時〜午後6時対応',
+      btn_contact:'連絡', call_coordinator:'Jamesさんのコーディネーターに電話',
+      book_appointment:'📋 予約する', hospital_label:'病院 / クリニック',
+      service_label:'必要なサービス', date_label:'希望日', extras_label:'追加サービス',
+      translation_service:'🌐 医療通訳（日本語）', accompaniment_service:'🤝 看護師同行',
+      insurance_service:'🛡️ 保険事前承認', btn_submit_appointment:'リクエストを送信',
+      coordination_history:'調整履歴', privacy_title:'🔒 プライバシーとデータ共有',
+      consent_status:'Jamesさんの同意状況', consent_active:'有効 · 2027年1月15日まで',
+      privacy_explanation:'Jamesさんの健康データは、担当ナース、コーディネーター、および本人が承認した方のみと共有されます。',
+      btn_revoke:'同意を取り消す', privacy_policy_title:'プライバシーポリシー',
+      service_general:'一般健康診断',
+    },
+  };
+  let currentLang = 'en';
+  const LANG_FLAGS = { en:'🇺🇸', es:'🇪🇸', ko:'🇰🇷', ja:'🇯🇵' };
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang] || translations.en;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      if (t[el.dataset.i18n]) el.textContent = t[el.dataset.i18n];
+    });
+    // Sync all lang buttons
+    document.querySelectorAll('[data-lang],[data-lang-top]').forEach(btn => {
+      const l = btn.dataset.lang || btn.dataset.langTop;
+      btn.classList.toggle('active', l === lang);
+    });
+    document.getElementById('sidebar-lang').textContent = lang.toUpperCase();
+    document.getElementById('sidebar-flag').textContent = LANG_FLAGS[lang] || '';
+    document.documentElement.lang = lang;
+    AuditLog.write({ action: 'LANGUAGE_CHANGED', resource: 'expat_dashboard', details: { language: lang } });
+    showToast('Language: ' + lang.toUpperCase(), '🌐');
+  }
+
+  // ── Vitals Chart ──────────────────────────────────────────
+  // James's own vitals history — Stage 1 hypertension range (130s)
+  const VITALS_DATA = {
+    7:  { labels:['Jun 19','Jun 20','Jun 21','Jun 22','Jun 23','Jun 24','Jun 25'], bp:[134,131,128,136,130,127,129], hr:[68,70,67,72,69,68,70] },
+    14: { labels:['Jun 12','13','14','15','16','17','18','19','20','21','22','23','24','25'], bp:[132,130,133,129,131,134,136,134,131,128,136,130,127,129], hr:[69,68,70,67,69,71,73,68,70,67,72,69,68,70] },
+    30: { labels:Array.from({length:30},(_,i)=>`Jun ${i+1}`), bp:Array.from({length:30},()=>124+Math.floor(Math.random()*16)), hr:Array.from({length:30},()=>66+Math.floor(Math.random()*10)) },
+  };
+
+  function setPeriod(days, btn) {
+    document.querySelectorAll('.period-btn').forEach(b => {
+      b.style.background=''; b.style.color=''; b.className=b.className;
+    });
+    btn.style.background='#8b5cf6'; btn.style.color='white';
+    initVitalsChart(days);
+  }
+
+  function initVitalsChart(days) {
+    const canvas = document.getElementById('vitals-chart');
+    if (!canvas) return;
+    if (vitalsChart) { vitalsChart.destroy(); vitalsChart=null; }
+    const d = VITALS_DATA[days] || VITALS_DATA[7];
+    vitalsChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: d.labels,
+        datasets: [
+          { label:"James's BP Systolic (mmHg)", data:d.bp, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,0.06)', tension:0.4, pointRadius:3, borderWidth:2 },
+          { label:"James's Heart Rate (bpm)",   data:d.hr, borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.06)', tension:0.4, pointRadius:3, borderWidth:2 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:'#6b7280', font:{size:11} } } },
+        scales:{
+          x:{ ticks:{color:'#9ca3af',font:{size:10},maxTicksLimit:7}, grid:{color:'rgba(0,0,0,0.05)'} },
+          y:{ ticks:{color:'#9ca3af',font:{size:10}}, grid:{color:'rgba(0,0,0,0.05)'} }
+        }
+      }
+    });
+  }
+
+  // ── Care Logs ─────────────────────────────────────────────
+  function renderCareLogs() {
+    const visits = DB.getVisitsByPatient('pat_002');
+    const el = document.getElementById('care-logs-list');
+    if (!visits.length) { el.innerHTML='<p class="text-sm text-gray-400">No visits yet.</p>'; return; }
+    el.innerHTML = visits.map(v => {
+      const done = v.tasks.filter(t=>t.done).length;
+      const sc = v.status==='in_progress' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700';
+      // James has no blood sugar monitoring — show cholesterol instead if available
+      const thirdStat = v.vitals.cholesterol_total
+        ? `<div class="p-1.5 rounded-lg bg-gray-50">
+            <div class="tooltip-wrap justify-center">
+              <span class="font-bold text-gray-700">${v.vitals.cholesterol_total}</span>
+              <span class="tooltip-icon">?</span>
+              <div class="tooltip-box">Total cholesterol in mg/dL. Target: under 200 mg/dL. Divide by 38.67 for mmol/L. ${Math.round(v.vitals.cholesterol_total/38.67*10)/10} mmol/L.</div>
+            </div>
+            <div class="text-gray-400">Chol. mg/dL</div>
+          </div>`
+        : `<div class="p-1.5 rounded-lg bg-gray-50"><span class="font-bold text-gray-700">${v.vitals.spo2 || '—'}%</span><div class="text-gray-400">SpO₂</div></div>`;
+      return `<div class="border border-gray-100 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold text-gray-800 text-sm">${v.date}</div>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${v.status.replace('_',' ')}</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-2">${v.time_start} – ${v.time_end} · RN Cathy Ramirez</div>
+        <div class="grid grid-cols-3 gap-2 mb-2 text-xs text-center">
+          <div class="p-1.5 rounded-lg bg-gray-50">
+            <div class="tooltip-wrap justify-center">
+              <span class="font-bold text-gray-700">${v.vitals.bp_systolic}/${v.vitals.bp_diastolic}</span>
+              <span class="tooltip-icon">?</span>
+              <div class="tooltip-box">James's Blood Pressure in mmHg. Target for Stage 1 hypertension: under 130/80. Normal: 120/80.</div>
+            </div>
+            <div class="text-gray-400">BP mmHg</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-gray-50"><span class="font-bold text-gray-700">${v.vitals.heart_rate}</span><div class="text-gray-400">HR bpm</div></div>
+          ${thirdStat}
+        </div>
+        <div class="flex flex-wrap gap-1 mb-2">
+          ${v.tasks.map(t=>t.done ? `<span class="task-chip task-done">✓ ${t.name}</span>` : `<span class="task-chip task-miss">✗ ${t.name}</span>`).join('')}
+        </div>
+        <p class="text-xs text-gray-500 italic">"${v.notes}"</p>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Medications ───────────────────────────────────────────
+  // Self-tracking: James checks off his own medications
+  function renderMeds() {
+    const meds = DB.getMedicationsByPatient('pat_002');
+    const el = document.getElementById('med-list');
+    const styles = {
+      given:    { bg:'bg-green-100', text:'text-green-700', label:'✅ Taken' },
+      pending:  { bg:'bg-yellow-100', text:'text-yellow-700', label:'⏳ Later' },
+      missed:   { bg:'bg-red-100',  text:'text-red-700',  label:'❌ Missed' },
+    };
+    el.innerHTML = meds.map(m => {
+      const s = styles[m.status] || styles.pending;
+      const canSelfMark = m.status === 'pending';
+      return `<div class="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50 ${canSelfMark ? 'cursor-pointer hover:bg-purple-50 hover:border-purple-200' : ''}"
+        ${canSelfMark ? `onclick="selfMarkMed('${m.id}')"` : ''}>
+        <div class="flex items-start gap-3">
+          <span class="text-xl">💊</span>
+          <div>
+            <div class="font-semibold text-gray-800 text-sm">${m.name}</div>
+            <div class="text-xs text-gray-500">${m.time} · ${m.for}</div>
+            ${canSelfMark ? '<div class="text-xs text-purple-600 font-medium mt-0.5">James can tap to confirm</div>' : ''}
+          </div>
+        </div>
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.bg} ${s.text}">${s.label}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function selfMarkMed(medId) {
+    const med = DB.medications.find(m => m.id === medId);
+    if (!med || med.status !== 'pending') return;
+    med.status = 'given';
+    AuditLog.write({ action:'MED_SELF_CONFIRMED', resource:'medications', resource_id: medId, details:{ med_name: med.name, patient_id: currentUser.patient_id } });
+    renderMeds();
+    showToast(`✅ ${med.name} confirmed — James has taken this`, '💊');
+  }
+
+  // ── Messages ─────────────────────────────────────────────
+  function renderMessages() {
+    // Only show James's own thread (usr_005 ↔ usr_002)
+    const msgs = DB.getMessagesByUser('usr_005');
+    const el = document.getElementById('chat-messages');
+    el.innerHTML = msgs.map(m => {
+      const isMe = m.from_id === 'usr_005';
+      const time = new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if (isMe) {
+        return `<div class="flex items-end gap-2 flex-row-reverse">
+          <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-sm flex-shrink-0">🌍</div>
+          <div class="items-end flex flex-col">
+            <div class="text-xs mb-1 text-gray-400">${m.from_name} · ${time}</div>
+            <div class="chat-me p-3 max-w-xs text-sm">${m.content}</div>
+          </div></div>`;
+      }
+      return `<div class="flex items-end gap-2">
+        <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-sm flex-shrink-0">👩‍⚕️</div>
+        <div>
+          <div class="text-xs mb-1 text-gray-400">${m.from_name} · ${time}</div>
+          <div class="chat-nurse p-3 max-w-xs text-sm">${m.content}</div>
+        </div></div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('msg-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    DB.messages.push({ id:'msg_'+Date.now(), from_id:'usr_005', to_id:'usr_002', from_name: currentUser.name, content:msg, timestamp:new Date().toISOString(), read:false });
+    input.value = '';
+    renderMessages();
+    AuditLog.write({ action:'MESSAGE_SENT', resource:'messages', details:{ preview:msg.slice(0,40) } });
+    showToast('Message sent to Nurse Cathy','💬');
+  }
+
+  // ── Hospital Navigator ────────────────────────────────────
+  const HOSPITALS = [
+    { name:'Baguio General Hospital', type:'Government', tag:'Emergency', tagColor:'bg-green-100 text-green-700', address:'Governor Pack Road', rating:'4.2', services:'General Medicine, Cardiology, Hypertension, Orthopaedics', notes:"Closest to James's home (5 min). Lowest out-of-pocket costs. Good for emergency response and routine BP check-ups.", phone:'+63 74 442-7727' },
+    { name:'Saint Louis University Hospital', type:'Private', tag:'Private', tagColor:'bg-blue-100 text-blue-700', address:'A. Bonifacio Street', rating:'4.6', services:'Cardiology, Neurology, Orthopedics, Oncology', notes:'AXA cashless facility. English-speaking staff. Best for specialist consultations.', phone:'+63 74 442-2001' },
+    { name:'Notre Dame de Chartres Hospital', type:'Private Catholic', tag:'Specialty', tagColor:'bg-purple-100 text-purple-700', address:'Corner Bokawkan Rd', rating:'4.5', services:'Rehabilitation, Geriatrics, Internal Medicine', notes:'Best geriatric care in Baguio. Strong in long-term management of Hypertension & T2DM.', phone:'+63 74 442-4101' },
+  ];
+
+  function renderHospitals(filter='') {
+    const el = document.getElementById('hospital-list');
+    const filtered = HOSPITALS.filter(h => h.name.toLowerCase().includes(filter.toLowerCase()) || h.services.toLowerCase().includes(filter.toLowerCase()));
+    el.innerHTML = filtered.map(h => `
+      <div class="hospital-card p-4 bg-white">
+        <div class="flex items-start justify-between mb-2">
+          <div><div class="font-bold text-gray-800">${h.name}</div><div class="text-xs text-gray-500">${h.type}</div></div>
+          <span class="tag ${h.tagColor}">${h.tag}</span>
+        </div>
+        <div class="text-xs text-gray-500 mb-1">📍 ${h.address} · ⭐ ${h.rating}/5</div>
+        <div class="text-xs text-gray-600 mb-2">${h.services}</div>
+        <div class="expat-assist mb-2">
+          <div class="expat-assist-label">🌍 Expat Context</div>
+          <div class="text-xs text-purple-900">${h.notes}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="showToast('Requesting accompaniment to ${h.name}...','🏥')" class="flex-1 py-2 rounded-lg text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100">Request Accompaniment</button>
+          <button onclick="showToast('Calling ${h.name}: ${h.phone}','📞')" class="px-3 py-2 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">📞</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function filterHospitals(val) { renderHospitals(val); }
+
+  // ── Shared Access ─────────────────────────────────────────
+  // James controls which family members can view his dashboard read-only
+  function renderSharedAccess() {
+    const el = document.getElementById('shared-access-list');
+    if (!el) return;
+    const delegates = currentUser.shared_access_users || [];
+    if (!delegates.length) {
+      el.innerHTML = '<p class="text-xs text-gray-400 text-center py-3">No family members have been granted access yet.</p>';
+      return;
+    }
+    const RELATION_FLAGS = { 'Daughter':'👧', 'Son':'👦', 'Spouse':'💑', 'Other Family':'👤' };
+    el.innerHTML = delegates.map((d, i) => `
+      <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+        <div class="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-lg flex-shrink-0">
+          ${RELATION_FLAGS[d.relation] || '👤'}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-gray-800 text-sm">${d.name}</div>
+          <div class="text-xs text-gray-500">${d.relation} · ${d.location}</div>
+          <div class="text-xs text-gray-400 mt-0.5">Access granted: ${d.granted} · ${d.access_level.replace('_', ' ')}</div>
+        </div>
+        <button onclick="revokeSharedAccess(${i})"
+          class="flex-shrink-0 text-xs px-2.5 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium">
+          Revoke
+        </button>
+      </div>`).join('');
+  }
+
+  function revokeSharedAccess(index) {
+    const delegate = currentUser.shared_access_users?.[index];
+    if (!delegate) return;
+    currentUser.shared_access_users.splice(index, 1);
+    AuditLog.write({
+      action: 'SHARED_ACCESS_REVOKED',
+      resource: 'shared_access',
+      details: { revoked_from: delegate.name, revoked_by: currentUser.id }
+    });
+    renderSharedAccess();
+    showToast(`Access revoked for ${delegate.name}`, '🔒');
+  }
+
+  function grantSharedAccess() {
+    const name     = document.getElementById('delegate-name').value.trim();
+    const email    = document.getElementById('delegate-email').value.trim();
+    const relation = document.getElementById('delegate-relation').value;
+    if (!name || !email || !relation) {
+      showToast('Please fill in all fields.', '⚠️');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    if (!currentUser.shared_access_users) currentUser.shared_access_users = [];
+    currentUser.shared_access_users.push({
+      name, relation, location: email, access_level: 'read_only', granted: today
+    });
+    AuditLog.write({
+      action: 'SHARED_ACCESS_GRANTED',
+      resource: 'shared_access',
+      details: { granted_to: name, email, relation, granted_by: currentUser.id }
+    });
+    document.getElementById('delegate-name').value  = '';
+    document.getElementById('delegate-email').value = '';
+    document.getElementById('delegate-relation').value = '';
+    renderSharedAccess();
+    showToast(`Invitation sent to ${name}. They'll receive a read-only link.`, '✉️');
+  }
+
+  // ── Audit ─────────────────────────────────────────────────
+  function renderAudit() {
+    const logs = AuditLog.getAll().slice(0,50);
+    const el = document.getElementById('audit-log-list');
+    if (!logs.length) { el.innerHTML='<p class="text-sm text-gray-400 text-center py-4">No audit logs yet.</p>'; return; }
+    el.innerHTML = logs.map(log => {
+      const time = new Date(log.timestamp).toLocaleString();
+      const c = log.action.includes('FAIL') ? 'text-red-600' : log.action.includes('BREAK') ? 'text-amber-600' : 'text-gray-700';
+      return `<div class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-gray-50">
+        <div class="w-2 h-2 rounded-full bg-green-400 mt-1.5 flex-shrink-0"></div>
+        <div class="flex-1 min-w-0"><div class="text-xs font-semibold ${c}">${log.action}</div><div class="text-xs text-gray-400">${log.resource} · ${time}</div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Modals ────────────────────────────────────────────────
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+  function triggerEmergency() {
+    closeModal('emergency-modal');
+    AuditLog.write({ action:'EMERGENCY_TRIGGERED', resource:'emergency_alerts', details:{ patient_id: currentUser.patient_id, triggered_by:currentUser.id } });
+    showToast('🚨 Emergency dispatched! Ambulance (117), Nurse Cathy, and Embassy notified.','🚨');
+  }
+
+  function revealVitals() {
+    closeModal('vitals-reveal-modal');
+    AuditLog.write({ action:'VITALS_REVEALED', resource:'vitals', details:{ patient_id: currentUser.patient_id, by:currentUser.id } });
+    showToast('Full vitals unlocked. Access logged.','🔓');
   }
 
   // ── Toast ─────────────────────────────────────────────────
   let toastTimer;
-  function showToast(msg, icon = '✅') {
+  function showToast(msg, icon='✅') {
     clearTimeout(toastTimer);
     document.getElementById('toast-msg').textContent = msg;
     document.getElementById('toast-icon').textContent = icon;
     document.getElementById('toast').classList.add('show');
-    toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 3500);
+    toastTimer = setTimeout(()=>document.getElementById('toast').classList.remove('show'), 3500);
   }
 
-  AuditLog.write({ action: 'DASHBOARD_LOADED', resource: 'expat_dashboard', details: { user_id: currentUser.id, language: currentLang } });
+  // ── Init ──────────────────────────────────────────────────
+  // Use currentUser.id so this works correctly regardless of which expat account is logged in
+  document.getElementById('unread-badge').classList.toggle('hidden', DB.getUnreadCount(currentUser.id) === 0);
+  AuditLog.write({
+    action: 'DASHBOARD_LOADED',
+    resource: 'expat_dashboard',
+    details: {
+      user_id: currentUser.id,
+      patient_id: currentUser.patient_id,
+      tier: 'gold',
+      category: 'expat',
+      is_self_patient: currentUser.is_self_patient,     // true — James IS the patient
+      shared_access_count: (currentUser.shared_access_users || []).length,
+    }
+  });
 </script>
 </body>
 </html>
